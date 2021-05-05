@@ -1,0 +1,179 @@
+/**
+ ******************************************************************************
+ * @file   stm32ipl_draw.c
+ * @author SRA AI Application Team
+ * @brief  STM32 Image Processing Library - DMA2D drawing function header file
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under Ultimate Liberty license
+ * SLA0044, the "License"; You may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at:
+ *                             www.st.com/SLA0044
+ *
+ ******************************************************************************
+ */
+
+#include "stm32ipl_draw.h"
+
+#ifdef STM32IPL_USE_HW_DRAW
+
+#ifdef USE_STM32H747I_DISCO
+
+#include "stm32h7xx_hal.h"
+#include "stm32h7xx_hal_dma2d.h"
+
+#define H747I_DISCO_LCD_FB			0xD0000000
+#define H747I_DISCO_LCD_BPP			4
+#define H747I_DISCO_LCD_WIDTH		800
+#define H747I_DISCO_LCD_HEIGHT		480
+#define H747I_DISCO_LCD_PIXELFORMAT DMA2D_OUTPUT_ARGB8888
+
+#else
+	#error STM32Ipl_Draw() is not implemented for this device
+#endif
+
+
+static const uint32_t lumaClut[256] =
+{
+	0x000000,0x010101,0x020202,0x030303,0x040404,0x050505,0x060606,0x070707,
+	0x080808,0x090909,0x0a0a0a,0x0b0b0b,0x0c0c0c,0x0d0d0d,0x0e0e0e,0x0f0f0f,
+	0x101010,0x111111,0x121212,0x131313,0x141414,0x151515,0x161616,0x171717,
+	0x181818,0x191919,0x1a1a1a,0x1b1b1b,0x1c1c1c,0x1d1d1d,0x1e1e1e,0x1f1f1f,
+	0x202020,0x212121,0x222222,0x232323,0x242424,0x252525,0x262626,0x272727,
+	0x282828,0x292929,0x2a2a2a,0x2b2b2b,0x2c2c2c,0x2d2d2d,0x2e2e2e,0x2f2f2f,
+	0x303030,0x313131,0x323232,0x333333,0x343434,0x353535,0x363636,0x373737,
+	0x383838,0x393939,0x3a3a3a,0x3b3b3b,0x3c3c3c,0x3d3d3d,0x3e3e3e,0x3f3f3f,
+	0x404040,0x414141,0x424242,0x434343,0x444444,0x454545,0x464646,0x474747,
+	0x484848,0x494949,0x4a4a4a,0x4b4b4b,0x4c4c4c,0x4d4d4d,0x4e4e4e,0x4f4f4f,
+	0x505050,0x515151,0x525252,0x535353,0x545454,0x555555,0x565656,0x575757,
+	0x585858,0x595959,0x5a5a5a,0x5b5b5b,0x5c5c5c,0x5d5d5d,0x5e5e5e,0x5f5f5f,
+	0x606060,0x616161,0x626262,0x636363,0x646464,0x656565,0x666666,0x676767,
+	0x686868,0x696969,0x6a6a6a,0x6b6b6b,0x6c6c6c,0x6d6d6d,0x6e6e6e,0x6f6f6f,
+	0x707070,0x717171,0x727272,0x737373,0x747474,0x757575,0x767676,0x777777,
+	0x787878,0x797979,0x7a7a7a,0x7b7b7b,0x7c7c7c,0x7d7d7d,0x7e7e7e,0x7f7f7f,
+	0x808080,0x818181,0x828282,0x838383,0x848484,0x858585,0x868686,0x878787,
+	0x888888,0x898989,0x8a8a8a,0x8b8b8b,0x8c8c8c,0x8d8d8d,0x8e8e8e,0x8f8f8f,
+	0x909090,0x919191,0x929292,0x939393,0x949494,0x959595,0x969696,0x979797,
+	0x989898,0x999999,0x9a9a9a,0x9b9b9b,0x9c9c9c,0x9d9d9d,0x9e9e9e,0x9f9f9f,
+	0xa0a0a0,0xa1a1a1,0xa2a2a2,0xa3a3a3,0xa4a4a4,0xa5a5a5,0xa6a6a6,0xa7a7a7,
+	0xa8a8a8,0xa9a9a9,0xaaaaaa,0xababab,0xacacac,0xadadad,0xaeaeae,0xafafaf,
+	0xb0b0b0,0xb1b1b1,0xb2b2b2,0xb3b3b3,0xb4b4b4,0xb5b5b5,0xb6b6b6,0xb7b7b7,
+	0xb8b8b8,0xb9b9b9,0xbababa,0xbbbbbb,0xbcbcbc,0xbdbdbd,0xbebebe,0xbfbfbf,
+	0xc0c0c0,0xc1c1c1,0xc2c2c2,0xc3c3c3,0xc4c4c4,0xc5c5c5,0xc6c6c6,0xc7c7c7,
+	0xc8c8c8,0xc9c9c9,0xcacaca,0xcbcbcb,0xcccccc,0xcdcdcd,0xcecece,0xcfcfcf,
+	0xd0d0d0,0xd1d1d1,0xd2d2d2,0xd3d3d3,0xd4d4d4,0xd5d5d5,0xd6d6d6,0xd7d7d7,
+	0xd8d8d8,0xd9d9d9,0xdadada,0xdbdbdb,0xdcdcdc,0xdddddd,0xdedede,0xdfdfdf,
+	0xe0e0e0,0xe1e1e1,0xe2e2e2,0xe3e3e3,0xe4e4e4,0xe5e5e5,0xe6e6e6,0xe7e7e7,
+	0xe8e8e8,0xe9e9e9,0xeaeaea,0xebebeb,0xececec,0xededed,0xeeeeee,0xefefef,
+	0xf0f0f0,0xf1f1f1,0xf2f2f2,0xf3f3f3,0xf4f4f4,0xf5f5f5,0xf6f6f6,0xf7f7f7,
+	0xf8f8f8,0xf9f9f9,0xfafafa,0xfbfbfb,0xfcfcfc,0xfdfdfd,0xfefefe,0xffffff
+};
+
+
+/* Return the DMA2D color format given the image format.
+ * format: the image format.
+ * return the DMA2D color format.
+ */
+static uint32_t get_input_color_mode(uint32_t format)
+{
+	switch (format) {
+	case IMAGE_BPP_BINARY:
+		return 0xFFFFFFFF - 1; /* Not supported. */
+
+	case IMAGE_BPP_GRAYSCALE:
+		return DMA2D_INPUT_L8;
+
+	case IMAGE_BPP_RGB565:
+		return DMA2D_INPUT_RGB565;
+
+	case IMAGE_BPP_BAYER:
+		return 0xFFFFFFFF - 1; /* Not supported. */
+
+	case IMAGE_BPP_JPEG:
+		return 0xFFFFFFFF - 1; /* Not supported. */
+
+	default:
+		return 0xFFFFFFFF - 1; /* Not supported. */
+	};
+}
+
+
+/**
+ * @brief Draw the image on the screen at the (x,y) coordinates using hardware acceleration.
+ * @param img	The image to be drawn
+ * @param x		The x coordinate of the top-left corner of the image.
+ * @param y		The y coordinate of the top-left corner of the image.
+ */
+void STM32Ipl_Draw(const image_t *img, uint16_t x, uint16_t y)
+{
+	static DMA2D_HandleTypeDef hlcd_dma2d;
+	uint32_t inputLineOffset = 0;
+	uint32_t cssMode = DMA2D_NO_CSS;
+	uint32_t saveBytesSwap;
+	uint32_t bytesSwap = DMA2D_BYTES_REGULAR;
+
+	if (!img && !img->data)
+		return;
+
+	saveBytesSwap = hlcd_dma2d.Init.BytesSwap;
+
+	uint32_t destination = H747I_DISCO_LCD_FB + (y * H747I_DISCO_LCD_WIDTH + x) * H747I_DISCO_LCD_BPP;
+	uint32_t source      = (uint32_t)img->data;
+
+	hlcd_dma2d.Init.Mode          = DMA2D_M2M_PFC;
+	hlcd_dma2d.Init.ColorMode     = H747I_DISCO_LCD_PIXELFORMAT;
+	hlcd_dma2d.Init.OutputOffset  = H747I_DISCO_LCD_WIDTH - img->w;
+	hlcd_dma2d.Init.AlphaInverted = DMA2D_REGULAR_ALPHA;
+	hlcd_dma2d.Init.RedBlueSwap   = DMA2D_RB_REGULAR;
+	hlcd_dma2d.Init.BytesSwap     = bytesSwap;
+	hlcd_dma2d.Init.LineOffsetMode= DMA2D_LOM_PIXELS;
+
+	hlcd_dma2d.XferCpltCallback   = NULL;
+	hlcd_dma2d.XferErrorCallback  = NULL;
+
+	hlcd_dma2d.LayerCfg[DMA2D_FOREGROUND_LAYER].AlphaMode         = DMA2D_REPLACE_ALPHA;
+	hlcd_dma2d.LayerCfg[DMA2D_FOREGROUND_LAYER].InputAlpha        = 0xFF;
+	hlcd_dma2d.LayerCfg[DMA2D_FOREGROUND_LAYER].InputColorMode    = get_input_color_mode(img->bpp);
+	hlcd_dma2d.LayerCfg[DMA2D_FOREGROUND_LAYER].InputOffset       = inputLineOffset;
+	hlcd_dma2d.LayerCfg[DMA2D_FOREGROUND_LAYER].AlphaInverted     = DMA2D_REGULAR_ALPHA;
+	hlcd_dma2d.LayerCfg[DMA2D_FOREGROUND_LAYER].RedBlueSwap       = DMA2D_RB_REGULAR;
+	hlcd_dma2d.LayerCfg[DMA2D_FOREGROUND_LAYER].ChromaSubSampling = cssMode;
+
+	hlcd_dma2d.Instance = DMA2D;
+
+	/* DMA2D initialization & starting. */
+	HAL_DMA2D_DeInit(&hlcd_dma2d);
+	if (HAL_DMA2D_Init(&hlcd_dma2d) == HAL_OK) {
+		if (HAL_DMA2D_ConfigLayer(&hlcd_dma2d, DMA2D_FOREGROUND_LAYER) == HAL_OK) {
+			if (img->bpp == IMAGE_BPP_GRAYSCALE) {
+				DMA2D_CLUTCfgTypeDef CLUTCfg;
+
+				/* Load DMA2D foreground CLUT. */
+				CLUTCfg.CLUTColorMode = DMA2D_CCM_ARGB8888;
+				CLUTCfg.pCLUT = (uint32_t*)lumaClut;
+				CLUTCfg.Size = 255;
+
+				HAL_DMA2D_CLUTStartLoad(&hlcd_dma2d, &CLUTCfg, DMA2D_FOREGROUND_LAYER);
+				HAL_DMA2D_PollForTransfer(&hlcd_dma2d, 30);
+			}
+			if (HAL_DMA2D_Start(&hlcd_dma2d, source, destination, img->w, img->h) == HAL_OK) {
+				/* Polling for DMA transfer. */
+				HAL_DMA2D_PollForTransfer(&hlcd_dma2d, 30);
+			}
+		}
+	}
+
+	/* Restore previous BytesSwap value. */
+	hlcd_dma2d.Init.BytesSwap = saveBytesSwap;
+}
+
+#else /* STM32IPL_USE_HW_DRAW */
+void STM32Ipl_Draw(const image_t *img, uint16_t x, uint16_t y)
+{
+	/* Void implementation. */
+}
+#endif /* STM32IPL_USE_HW_DRAW */

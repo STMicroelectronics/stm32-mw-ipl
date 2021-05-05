@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Release Notes for STM32 Image Processing Library Middleware Component</title>
+  <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <link rel="stylesheet" href="./_htmresc/mini-st.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<div class="row">
+<div class="col-sm-12 col-lg-4">
+<div class="card fluid">
+<div class="sectione dark">
+<center>
+<h1 id="release-notes-for-stm32_ipl-library"><small>Release Notes for</small> <strong>STM32 Image Processing Library</strong></h1>
+<p>Copyright © 2021 STMicroelectronics</p>
+<a href="https://www.st.com" class="logo"><img src="./_htmresc/st_logo.png" alt="ST logo" /></a>
+</center>
+</div>
+</div>
+<h1 id="license">License</h1>
+<p>The STM32 Image Processing Library is licensed by ST under ST license SLA0044, the “License”. You may not use this component except in compliance with the License. You may obtain a copy of the License at:</p>
+<p><a href="http://www.st.com/SLA0044">http://www.st.com/SLA0044</a></p>
+<p>The STM32 Image Processing Library utilizes software components delivered under different licenses. Details of applicable license for each component are provided in the table of the "Contents" section below.</p>
+<h1 id="purpose">Purpose</h1>
+<p>The STM32 Image Processing Library is a C software library for STM32 MCUs providing specific functionalities that help the development of visual analysis applications; it is also a component of the STM32 Middleware level.</p>
+<figure>
+<img src="_htmresc/STM32IPL_Software_Architecture.svg" alt="" /><figcaption>STM32 Image Processing Library Software Architecture</figcaption>
+</figure>
+<p>Here is the list of references to user documents:</p>
+<ul>
+<li><a href="../../../Documentation/STM32_ImageProcessing_Library_getting_started.pdf">PDF</a>: Getting started with the STM32 Image Processing Library</li>
+<li><a href="../../../Documentation/STM32_ImageProcessing_Library.chm">CHM</a>: STM32 Image Processing Library documentation</li>
+</ul>
+</div>
+
+
+
+<div class="col-sm-12 col-lg-8">
+<h1 id="update-history">Update History</h1>
+
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section6" aria-hidden="true"> <label for="collapse-section6" aria-hidden="true"><strong>V0.0.7 / 28-January-2021</strong></label>
+<div>
+<h2 id="main-changes-4">Main Changes</h2>
+<ul>
+<li>Integrated the support of YCbCr to RGB565 conversion to the STM32H7 JPEG HW decoder</li>
+<li>Integrated the STM32H7 JPEG HW encoder to support file saving function</li>
+<li>Removed support to YCbCr MCUs based images</li>
+<li>Integrated the JPEG SW codec based on libJPEG</li>
+<li>Some functions have been renamed</li>
+<li>Added STM32Ipl_AllocateData() function</li>
+<li>Added STM32Ipl_Copy() function</li>
+<li>Added STM32Ipl_CopyData() function</li>
+<li>Added STM32Ipl_Clone() function</li>
+<li>Added STM32Ipl_ImageDataSize() function</li>
+<li>Added STM32Ipl_DataSize() function</li>
+<li>Added configuration file (stm32ipl_conf.h)</li>
+<li>Fixed bugs relative to the reading of 1 bit and 4 bits BMP files</li>
+</ul>
+<h2 id="contents-3">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.7</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.7</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.9</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="known-limitations-4">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-4">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-4">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-4">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-4">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section5" aria-hidden="true"> <label for="collapse-section5" aria-hidden="true"><strong>V0.0.6 / 09-December-2020</strong></label>
+<div>
+<h2 id="main-changes-4">Main Changes</h2>
+<ul>
+<li>Fixed bug reading 16 bits BMP images</li>
+<li>Save image functions improved</li>
+<li>MountSDDrive and UnmountSDDrive functions removed</li>
+<li>Source folders renamed</li>
+</ul>
+<h2 id="contents-3">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.6</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.6</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.9</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="known-limitations-4">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-4">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-4">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-4">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-4">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section4" aria-hidden="true"> <label for="collapse-section4" aria-hidden="true"><strong>V0.0.5 / 17-November-2020</strong></label>
+<div>
+<h2 id="main-changes-5">Main Changes</h2>
+<ul>
+<li>Function, file and folder renaming</li>
+<li>Image release data function added</li>
+<li>Function arguments check improved</li>
+<li>Generic object detector added</li>
+<li>Direct Face and Eye detection functions added</li>
+<li>Flip, mirror and rotation functions added</li>
+<li>Demo source file and media moved to Applications</li>
+</ul>
+<h2 id="contents-4">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.5</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 ImageProcessing Library</td>
+<td style="text-align: center;">V0.0.5</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.9</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="known-limitations-5">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-5">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-5">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-5">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-5">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section4" aria-hidden="true"> <label for="collapse-section4" aria-hidden="true"><strong>V0.0.5 / 17-November-2020</strong></label>
+<div>
+<h2 id="main-changes-5">Main Changes</h2>
+<ul>
+<li>Function, file and folder renaming</li>
+<li>Image release data function added</li>
+<li>Function arguments check improved</li>
+<li>Generic object detector added</li>
+<li>Direct Face and Eye detection functions added</li>
+<li>Flip, mirror and rotation functions added</li>
+<li>Demo source file and media moved to Applications</li>
+</ul>
+<h2 id="contents-4">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.5</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 ImageProcessing Library</td>
+<td style="text-align: center;">V0.0.5</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.9</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="known-limitations-5">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-5">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-5">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-5">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-5">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section3" aria-hidden="true"> <label for="collapse-section3" aria-hidden="true"><strong>V0.0.4 / 04-November-2020</strong></label>
+<div>
+<h2 id="main-changes-6">Main Changes</h2>
+<ul>
+<li>Fault handler function removed</li>
+<li>TopHat, BlackHat and Hough functions added</li>
+</ul>
+<h2 id="contents-5">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.4</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 ImageProcessing Library</td>
+<td style="text-align: center;">V0.0.4</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.9</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="known-limitations-6">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-6">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-6">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-6">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-6">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section2" aria-hidden="true"> <label for="collapse-section2" aria-hidden="true"><strong>V0.0.3 / 26-October-2020</strong></label>
+<div>
+<h2 id="main-changes-7">Main Changes</h2>
+<ul>
+<li>Aligned to <a href="https://github.com/openmv/openmv/tree/f79167de4b169e4f0f594b95c35f1abbf8f366d6">this</a> OpenMV branch</li>
+<li>RGB565 channel inversion patch integrated</li>
+</ul>
+<h2 id="contents-6">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.3</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 ImageProcessing Library</td>
+<td style="text-align: center;">V0.0.3</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.9</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="known-limitations-7">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-7">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-7">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-7">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-7">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section1" aria-hidden="true"> <label for="collapse-section1" aria-hidden="true"><strong>V0.0.2 / 21-October-2020</strong></label>
+<div>
+<h2 id="main-changes-8">Main Changes</h2>
+<ul>
+<li>Alignment to OpenMV 3.6.9 (stable)</li>
+</ul>
+<h2 id="contents-7">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.2</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 ImageProcessing Library</td>
+<td style="text-align: center;">V0.0.2</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.9</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="known-limitations-8">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-8">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-8">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-8">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-8">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+
+<div class="collapse">
+<input type="checkbox" id="collapse-section0" aria-hidden="true"> <label for="collapse-section0" aria-hidden="true"><strong>V0.0.1 / 16-October-2020</strong></label>
+<div>
+<h2 id="main-changes-9">Main Changes</h2>
+<p><strong>First release candidate of STM32 Image Processing Library</strong></p>
+<h2 id="contents-8">Contents</h2>
+<h3 id="components">Components</h3>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: center;">Version</th>
+<th style="text-align: center;">License</th>
+<th style="text-align: center;">Release note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Core STM32 Image Processing Library</td>
+<td style="text-align: center;">V0.0.1</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Extended STM32 ImageProcessing Library</td>
+<td style="text-align: center;">V0.0.1</td>
+<td style="text-align: center;"><a href="http://www.st.com/SLA0044">SLA0044</a></td>
+<td style="text-align: center;"><a href="Release_notes.html">release notes</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">OpenMV</td>
+<td style="text-align: center;">V3.6.8</td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/LICENSE">MIT</a></td>
+<td style="text-align: center;"><a href="https://github.com/openmv/openmv/blob/master/CHANGELOG.md">change log</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="known-limitations-9">Known Limitations</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="development-toolchains-and-compilers-9">Development Toolchains and Compilers</h2>
+<ul>
+<li>STM32Cube.IDE toolchain V1.4.0</li>
+</ul>
+<h2 id="supported-devices-and-boards-9">Supported Devices and boards</h2>
+<ul>
+<li>STM32H747I-DISCO rev.D</li>
+</ul>
+<h2 id="backward-compatibility-9">Backward Compatibility</h2>
+<ul>
+<li>None</li>
+</ul>
+<h2 id="dependencies-9">Dependencies</h2>
+<ul>
+</ul>
+</div>
+</div>
+
+
+</div>
+
+
+
+
+</div>
+<footer class="sticky">
+<p>For complete documentation on <strong>STM32 Microcontrollers </strong> , visit: <a href="http://www.st.com/STM32">www.st.com</a></p>
+This release note uses up to date web standards and, for this reason, should not be opened with Internet Explorer but preferably with popular browsers such as Google Chrome, Mozilla Firefox, Opera or Microsoft Edge.
+</footer>
+</body>
+</html>
