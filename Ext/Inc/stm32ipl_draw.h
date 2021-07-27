@@ -24,5 +24,4 @@
 
 void STM32Ipl_Draw(const image_t *image, uint16_t x, uint16_t y);
 
-
 #endif /* __STM32IPL_DRAW_H_ */

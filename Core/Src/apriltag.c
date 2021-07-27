@@ -17,10 +17,10 @@
 #define OPTIMIZED
 
 #ifdef IMLIB_ENABLE_APRILTAGS
-#if defined ( __GNUC__ ) /* STM32IPL */
+#if defined ( __GNUC__ ) // STM32IPL
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#endif /* __GNUC__ */ /* STM32IPL */
+#endif /* __GNUC__ */ // STM32IPL
 
 /* Copyright (C) 2013-2016, The Regents of The University of Michigan.
 All rights reserved.
@@ -96,7 +96,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #define fminf(a, b) ({ a < b ? a : b; })
 #define fmax(a, b)  ({ a > b ? a : b; })
 #define fmaxf(a, b) ({ a > b ? a : b; })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// "zarray.h"
@@ -491,9 +491,9 @@ static inline void zarray_map(zarray_t *za, void (*f)(void*))
  */
 #ifdef STM32IPL
     void zarray_vmap(zarray_t *za, void (*f)(void*));
-#else /* STM32IPL */
+#else // STM32IPL
     void zarray_vmap(zarray_t *za, void (*f)());
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 /**
  * Removes all elements from the array and sets its size to zero. Pointers to
@@ -614,9 +614,9 @@ int zstrcmp(const void * a_pp, const void * b_pp)
 
 #ifdef STM32IPL
 void zarray_vmap(zarray_t *za, void (*f)(void*))
-#else /* STM32IPL */
+#else // STM32IPL
 void zarray_vmap(zarray_t *za, void (*f)())
-#endif /* STM32IPL */
+#endif // STM32IPL
 {
     assert(za != NULL);
     assert(f != NULL);
@@ -637,9 +637,11 @@ void zarray_vmap(zarray_t *za, void (*f)())
 # define M_TWOPI       6.2831853071795862319959  /* 2*pi */
 #endif
 
+/* STM32IPL: moved to imlib.h.
 #ifndef M_PI
 # define M_PI 3.141592653589793238462643383279502884196
 #endif
+*/
 
 #define to_radians(x) ( (x) * (M_PI / 180.0 ))
 #define to_degrees(x) ( (x) * (180.0 / M_PI ))
@@ -681,7 +683,7 @@ static inline float sgn(float v)
 }
 
 // random number between [0, 1)
-static inline float randf(void)
+static inline float randf()
 {
     return ((float) rand()) / (RAND_MAX + 1.0);
 }
@@ -2234,8 +2236,7 @@ matd_t *matd_op(const char *expr, ...)
     va_list ap;
     va_start(ap, expr);
 
-    matd_t *args[nargs]; 
-
+    matd_t *args[nargs];
     for (int i = 0; i < nargs; i++) {
         args[i] = va_arg(ap, matd_t*);
         // XXX: sanity check argument; emit warning/error if args[i]
@@ -2247,10 +2248,10 @@ matd_t *matd_op(const char *expr, ...)
     int pos = 0;
     int argpos = 0;
     int garbpos = 0;
-    
+
     matd_t *garb[2*exprlen]; // can't create more than 2 new result per character
                              // one result, and possibly one argument to free
-    
+
     matd_t *res = matd_op_recurse(expr, &pos, NULL, args, &argpos, garb, &garbpos, 0);
 
     // 'res' may need to be freed as part of garbage collection (i.e. expr = "F")
@@ -2259,7 +2260,7 @@ matd_t *matd_op(const char *expr, ...)
     for (int i = 0; i < garbpos; i++) {
         matd_destroy(garb[i]);
     }
-    
+
     return res_copy;
 }
 
@@ -11900,7 +11901,7 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
                     if (pref == 0) {
                         // at this point, we should only be undecided if the tag detections
                         // are *exactly* the same. How would that happen?
-                        printf("uh oh, no preference for overlappingdetection\n");
+                        // printf("uh oh, no preference for overlappingdetection\n");
                     }
 
                     if (pref < 0) {
@@ -11971,7 +11972,7 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
     size_t fb_alloc_need = resolution * (1 + 1 + 2 + 1); // read above...
 #ifndef STM32IPL
     umm_init_x(((fb_avail() - fb_alloc_need) / resolution) * resolution);
-#endif /* STM32IPL */
+#endif // STM32IPL
     apriltag_detector_t *td = apriltag_detector_create();
 
     if (families & TAG16H5) {
@@ -12116,7 +12117,9 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
     apriltag_detections_destroy(detections);
     fb_free(); // grayscale_image;
     apriltag_detector_destroy(td);
+#ifndef STM32IPL
     fb_free(); // umm_init_x();
+#endif // STM32IPL
 }
 
 #ifdef IMLIB_ENABLE_FIND_RECTS
@@ -12130,7 +12133,7 @@ void imlib_find_rects(list_t *out, image_t *ptr, rectangle_t *roi, uint32_t thre
     size_t fb_alloc_need = resolution * (1 + 1 + 4 + 2); // read above...
 #ifndef STM32IPL
     umm_init_x(((fb_avail() - fb_alloc_need) / resolution) * resolution);
-#endif /* STM32IPL */
+#endif // STM32IPL
     apriltag_detector_t *td = apriltag_detector_create();
 
     image_t img;
@@ -12138,7 +12141,7 @@ void imlib_find_rects(list_t *out, image_t *ptr, rectangle_t *roi, uint32_t thre
     img.h = roi->h;
     img.bpp = IMAGE_BPP_GRAYSCALE;
     img.data = fb_alloc(image_size(&img), FB_ALLOC_NO_HINT);
-    imlib_draw_image(&img, ptr, 0, 0, 1.f, 1.f, roi, -1, 256, NULL, NULL, 0);
+    imlib_draw_image(&img, ptr, 0, 0, 1.f, 1.f, roi, -1, 256, NULL, NULL, 0, NULL, NULL);
 
     image_u8_t im;
     im.width = roi->w;
@@ -12213,7 +12216,7 @@ void imlib_find_rects(list_t *out, image_t *ptr, rectangle_t *roi, uint32_t thre
                     if (pref == 0) {
                         // at this point, we should only be undecided if the tag detections
                         // are *exactly* the same. How would that happen?
-                        printf("uh oh, no preference for overlappingdetection\n");
+                        // printf("uh oh, no preference for overlappingdetection\n");
                     }
 
                     if (pref < 0) {
@@ -12313,7 +12316,9 @@ void imlib_find_rects(list_t *out, image_t *ptr, rectangle_t *roi, uint32_t thre
     zarray_destroy(detections);
     fb_free(); // grayscale_image;
     apriltag_detector_destroy(td);
+#ifndef STM32IPL
     fb_free(); // umm_init_x();
+#endif // STM32IPL
 }
 #endif //IMLIB_ENABLE_FIND_RECTS
 
@@ -12331,7 +12336,7 @@ void imlib_rotation_corr(image_t *img, float x_rotation, float y_rotation, float
 
 #ifndef STM32IPL
     umm_init_x(fb_avail());
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     int w = img->w;
     int h = img->h;
@@ -12580,12 +12585,14 @@ void imlib_rotation_corr(image_t *img, float x_rotation, float y_rotation, float
     matd_destroy(RX);
     matd_destroy(A1);
 
+#ifndef STM32IPL
     fb_free(); // umm_init_x();
+#endif // STM32IPL
 
     fb_free();
 }
 #endif //IMLIB_ENABLE_ROTATION_CORR
-#if defined ( __GNUC__ ) /* STM32IPL */
+#if defined ( __GNUC__ ) // STM32IPL
 #pragma GCC diagnostic pop
-#endif /* __GNUC__ */ /* STM32IPL */
+#endif /* __GNUC__ */ // STM32IPL
 #endif //IMLIB_ENABLE_APRILTAGS

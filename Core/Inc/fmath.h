@@ -10,14 +10,16 @@
  */
 #ifndef __FMATH_H__
 #define __FMATH_H__
+#include <stdlib.h>
 #include <stdint.h>
+#include <float.h>
 #include "common.h" /* STM32IPL added */
 
 /* STM32IPL removed as the definitions of such functions has been added below.
-float ALWAYS_INLINE fast_sqrtf(float x);
-int ALWAYS_INLINE fast_floorf(float x);
-int ALWAYS_INLINE fast_ceilf(float x);
-int ALWAYS_INLINE fast_roundf(float x);
+float fast_sqrtf(float x);
+int fast_floorf(float x);
+int fast_ceilf(float x);
+int fast_roundf(float x);
 */
 float fast_atanf(float x);
 float fast_atan2f(float y, float x);
@@ -29,12 +31,13 @@ float fast_fabsf(float d);
 float fast_log(float x);
 float fast_log2(float x);
 float fast_powf(float a, float b);
+void fast_get_min_max(float *data, size_t data_len, float *p_min, float *p_max);
 extern const float cos_table[360];
 extern const float sin_table[360];
 
 
 /* STM32IPL following functions have been added to allow their "visibility" as they are inline. */
-float ALWAYS_INLINE fast_sqrtf(float x)
+float OMV_ATTR_ALWAYS_INLINE fast_sqrtf(float x)
 {
     asm volatile (
             "vsqrt.f32  %[r], %[x]\n"
@@ -43,7 +46,7 @@ float ALWAYS_INLINE fast_sqrtf(float x)
     return x;
 }
 
-int ALWAYS_INLINE fast_floorf(float x)
+int OMV_ATTR_ALWAYS_INLINE fast_floorf(float x)
 {
     int i;
     asm volatile (
@@ -53,7 +56,7 @@ int ALWAYS_INLINE fast_floorf(float x)
     return i;
 }
 
-int ALWAYS_INLINE fast_ceilf(float x)
+int OMV_ATTR_ALWAYS_INLINE fast_ceilf(float x)
 {
     int i;
     x += 0.9999f;
@@ -64,7 +67,7 @@ int ALWAYS_INLINE fast_ceilf(float x)
     return i;
 }
 
-int ALWAYS_INLINE fast_roundf(float x)
+int OMV_ATTR_ALWAYS_INLINE fast_roundf(float x)
 {
     int i;
     asm volatile (
@@ -74,7 +77,7 @@ int ALWAYS_INLINE fast_roundf(float x)
     return i;
 }
 
-float ALWAYS_INLINE fast_fabsf(float x)
+float OMV_ATTR_ALWAYS_INLINE fast_fabsf(float x)
 {
     asm volatile (
             "vabs.f32  %[r], %[x]\n"

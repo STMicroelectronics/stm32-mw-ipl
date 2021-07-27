@@ -311,12 +311,10 @@ static void imlib_add_line_op(image_t *img, int line, void *other, void *data, b
     }
 }
 
-#ifndef STM32IPL
 void imlib_add(image_t *img, const char *path, image_t *other, int scalar, image_t *mask)
 {
     imlib_image_operation(img, path, other, scalar, imlib_add_line_op, mask);
 }
-#endif /* STM32IPL */
 
 typedef struct imlib_sub_line_op_state {
     bool reverse;
@@ -384,7 +382,6 @@ static void imlib_sub_line_op(image_t *img, int line, void *other, void *data, b
     }
 }
 
-#ifndef STM32IPL
 void imlib_sub(image_t *img, const char *path, image_t *other, int scalar, bool reverse, image_t *mask)
 {
     imlib_sub_line_op_state_t state;
@@ -392,7 +389,6 @@ void imlib_sub(image_t *img, const char *path, image_t *other, int scalar, bool 
     state.mask = mask;
     imlib_image_operation(img, path, other, scalar, imlib_sub_line_op, &state);
 }
-#endif /* STM32IPL */
 
 typedef struct imlib_mul_line_op_state {
     bool invert;
@@ -470,7 +466,6 @@ static void imlib_mul_line_op(image_t *img, int line, void *other, void *data, b
     }
 }
 
-#ifndef STM32IPL
 void imlib_mul(image_t *img, const char *path, image_t *other, int scalar, bool invert, image_t *mask)
 {
     imlib_mul_line_op_state_t state;
@@ -478,7 +473,6 @@ void imlib_mul(image_t *img, const char *path, image_t *other, int scalar, bool 
     state.mask = mask;
     imlib_image_operation(img, path, other, scalar, imlib_mul_line_op, &state);
 }
-#endif /* STM32IPL */
 
 typedef struct imlib_div_line_op_state {
     bool invert, mod;
@@ -562,7 +556,6 @@ static void imlib_div_line_op(image_t *img, int line, void *other, void *data, b
     }
 }
 
-#ifndef STM32IPL
 void imlib_div(image_t *img, const char *path, image_t *other, int scalar, bool invert, bool mod, image_t *mask)
 {
     imlib_div_line_op_state_t state;
@@ -571,7 +564,6 @@ void imlib_div(image_t *img, const char *path, image_t *other, int scalar, bool 
     state.mask = mask;
     imlib_image_operation(img, path, other, scalar, imlib_div_line_op, &state);
 }
-#endif /* STM32IPL */
 
 static void imlib_min_line_op(image_t *img, int line, void *other, void *data, bool vflipped)
 {
@@ -622,12 +614,10 @@ static void imlib_min_line_op(image_t *img, int line, void *other, void *data, b
     }
 }
 
-#ifndef STM32IPL
 void imlib_min(image_t *img, const char *path, image_t *other, int scalar, image_t *mask)
 {
     imlib_image_operation(img, path, other, scalar, imlib_min_line_op, mask);
 }
-#endif /* STM32IPL */
 
 static void imlib_max_line_op(image_t *img, int line, void *other, void *data, bool vflipped)
 {
@@ -678,12 +668,10 @@ static void imlib_max_line_op(image_t *img, int line, void *other, void *data, b
     }
 }
 
-#ifndef STM32IPL
 void imlib_max(image_t *img, const char *path, image_t *other, int scalar, image_t *mask)
 {
     imlib_image_operation(img, path, other, scalar, imlib_max_line_op, mask);
 }
-#endif /* STM32IPL */
 
 static void imlib_difference_line_op(image_t *img, int line, void *other, void *data, bool vflipped)
 {
@@ -794,7 +782,6 @@ static void imlib_blend_line_op(image_t *img, int line, void *other, void *data,
     }
 }
 
-#ifndef STM32IPL
 void imlib_blend(image_t *img, const char *path, image_t *other, int scalar, float alpha, image_t *mask)
 {
     imlib_blend_line_op_t state;
@@ -802,6 +789,4 @@ void imlib_blend(image_t *img, const char *path, image_t *other, int scalar, flo
     state.mask = mask;
     imlib_image_operation(img, path, other, scalar, imlib_blend_line_op, &state);
 }
-#endif /* STM32IPL */
-
 #endif //IMLIB_ENABLE_MATH_OPS

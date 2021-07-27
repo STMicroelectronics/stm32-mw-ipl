@@ -137,7 +137,8 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                       unsigned int x_hist_bins_max, unsigned int y_hist_bins_max)
 {
     // Same size as the image so we don't have to translate.
-    image_t bmp;
+
+	image_t bmp;
     bmp.w = ptr->w;
     bmp.h = ptr->h;
     bmp.bpp = IMAGE_BPP_BINARY;
@@ -151,7 +152,13 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
 
     lifo_t lifo;
     size_t lifo_len;
+
+#ifndef STM32IPL
     lifo_alloc_all(&lifo, &lifo_len, sizeof(xylr_t));
+#else
+    lifo_len = 500; /* xalloc (500 * 12) */
+    lifo_alloc(&lifo, lifo_len, sizeof(xylr_t));
+#endif
 
     list_init(out, sizeof(find_blobs_list_lnk_data_t));
 
@@ -406,8 +413,28 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                     bin_up(y_hist_bins, ptr->h, y_hist_bins_max, &lnk_blob.y_hist_bins, &lnk_blob.y_hist_bins_count);
                                 }
 
-                                if (((threshold_cb_arg == NULL) || threshold_cb(threshold_cb_arg, &lnk_blob))) {
-                                    list_push_back(out, &lnk_blob);
+                                bool add_to_list = threshold_cb_arg == NULL;
+#ifndef STM32IPL
+                                if (!add_to_list) {
+                                    // Protect ourselves from caught exceptions in the callback
+                                    // code from freeing our fb_alloc() stack.
+                                    fb_alloc_mark();
+                                    fb_alloc_mark_permanent();
+                                    add_to_list = threshold_cb(threshold_cb_arg, &lnk_blob);
+                                    fb_alloc_free_till_mark_past_mark_permanent();
+                                }
+#endif
+
+                                if (add_to_list) {
+#ifndef STM32IPL
+                                	list_push_back(out, &lnk_blob);
+#else
+                                	list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
+                                    if (tmp){
+                                    	xfree(tmp);
+                                    	list_push_back(out, &lnk_blob);
+                                    }
+#endif
                                 } else {
                                     if (lnk_blob.x_hist_bins) xfree(lnk_blob.x_hist_bins);
                                     if (lnk_blob.y_hist_bins) xfree(lnk_blob.y_hist_bins);
@@ -666,8 +693,28 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                     bin_up(y_hist_bins, ptr->h, y_hist_bins_max, &lnk_blob.y_hist_bins, &lnk_blob.y_hist_bins_count);
                                 }
 
-                                if (((threshold_cb_arg == NULL) || threshold_cb(threshold_cb_arg, &lnk_blob))) {
-                                    list_push_back(out, &lnk_blob);
+                                bool add_to_list = threshold_cb_arg == NULL;
+#ifndef STM32IPL
+                                if (!add_to_list) {
+                                    // Protect ourselves from caught exceptions in the callback
+                                    // code from freeing our fb_alloc() stack.
+                                    fb_alloc_mark();
+                                    fb_alloc_mark_permanent();
+                                    add_to_list = threshold_cb(threshold_cb_arg, &lnk_blob);
+                                    fb_alloc_free_till_mark_past_mark_permanent();
+                                }
+#endif
+
+                                if (add_to_list) {
+#ifndef STM32IPL
+                                	list_push_back(out, &lnk_blob);
+#else
+                                	list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
+                                    if (tmp){
+                                    	xfree(tmp);
+                                    	list_push_back(out, &lnk_blob);
+                                    }
+#endif
                                 } else {
                                     if (lnk_blob.x_hist_bins) xfree(lnk_blob.x_hist_bins);
                                     if (lnk_blob.y_hist_bins) xfree(lnk_blob.y_hist_bins);
@@ -926,8 +973,28 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                     bin_up(y_hist_bins, ptr->h, y_hist_bins_max, &lnk_blob.y_hist_bins, &lnk_blob.y_hist_bins_count);
                                 }
 
-                                if (((threshold_cb_arg == NULL) || threshold_cb(threshold_cb_arg, &lnk_blob))) {
-                                    list_push_back(out, &lnk_blob);
+                                bool add_to_list = threshold_cb_arg == NULL;
+#ifndef STM32IPL
+                                if (!add_to_list) {
+                                    // Protect ourselves from caught exceptions in the callback
+                                    // code from freeing our fb_alloc() stack.
+                                    fb_alloc_mark();
+                                    fb_alloc_mark_permanent();
+                                    add_to_list = threshold_cb(threshold_cb_arg, &lnk_blob);
+                                    fb_alloc_free_till_mark_past_mark_permanent();
+                                }
+#endif
+
+                                if (add_to_list) {
+#ifndef STM32IPL
+                                	list_push_back(out, &lnk_blob);
+#else
+                                	list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
+                                    if (tmp){
+                                    	xfree(tmp);
+                                    	list_push_back(out, &lnk_blob);
+                                    }
+#endif
                                 } else {
                                     if (lnk_blob.x_hist_bins) xfree(lnk_blob.x_hist_bins);
                                     if (lnk_blob.y_hist_bins) xfree(lnk_blob.y_hist_bins);
@@ -1016,11 +1083,26 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                         lnk_blob.roundness = lnk_blob.roundness_acc / lnk_blob.pixels;
                         merge_occured = true;
                     } else {
-                        list_push_back(out, &tmp_blob);
+#ifndef STM32IPL
+                    	list_push_back(out, &tmp_blob);
+#else
+                        list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
+						if (tmp){
+						 xfree(tmp);
+						 list_push_back(out, &tmp_blob);
+						}
+#endif
                     }
                 }
-
-                list_push_back(&out_temp, &lnk_blob);
+#ifndef STM32IPL
+                list_push_back(out_temp, &lnk_blob);
+#else
+                list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out_temp.data_len);
+				if (tmp){
+				 xfree(tmp);
+				 list_push_back(&out_temp, &lnk_blob);
+				}
+#endif
             }
 
             list_copy(out, &out_temp);

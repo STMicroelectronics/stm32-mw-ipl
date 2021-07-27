@@ -67,7 +67,7 @@
        (_t) = ( a);  \
        ( a) = ( b);  \
        ( b) = (_t); })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 void imlib_integral_mw_alloc(mw_image_t *sum, int w, int h)
 {
@@ -114,7 +114,7 @@ void imlib_integral_mw(image_t *src, mw_image_t *sum)
     typeof(*sum->data) *sum_data = sum->data;
 #else
     uint32_t* *sum_data = sum->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute the first row to avoid branching
     for (int sx, s=0, x=0; x<sum->w; x++) {
@@ -152,7 +152,7 @@ void imlib_integral_mw_sq(image_t *src, mw_image_t *sum)
     typeof(*sum->data) *sum_data = sum->data;
 #else
     uint32_t* *sum_data = sum->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute the first row to avoid branching
     for (int sx, s=0, x=0; x<sum->w; x++) {
@@ -195,7 +195,7 @@ void imlib_integral_mw_shift(image_t *src, mw_image_t *sum, int n)
     SWAP_PTRS(sum->data, sum->swap);
 #else
     SWAP_PTRS(uint32_t **, sum->data, sum->swap);
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     uint32_t *tmpPtr = *sum->data;
     *sum->data = *sum->swap;
@@ -207,7 +207,7 @@ void imlib_integral_mw_shift(image_t *src, mw_image_t *sum, int n)
     typeof(*sum->data) *sum_data = sum->data;
 #else
     uint32_t* *sum_data = sum->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute the last n lines
     for (int sy, y=(sum->h - n); y<sum->h; y++, sum->y_offs++) {
@@ -238,14 +238,14 @@ void imlib_integral_mw_shift_sq(image_t *src, mw_image_t *sum, int n)
     SWAP_PTRS(sum->data, sum->swap);
 #else
     SWAP_PTRS(uint32_t **, sum->data, sum->swap);
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Pointer to the current sum data
 #ifndef STM32IPL
     typeof(*sum->data) *sum_data = sum->data;
 #else
     uint32_t* *sum_data = sum->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute the last n lines
     for (int sy, y=(sum->h - n); y<sum->h; y++, sum->y_offs++) {
@@ -273,7 +273,7 @@ void imlib_integral_mw_ss(image_t *src, mw_image_t *sum, mw_image_t *ssq, rectan
 #else
     uint32_t* *sum_data = sum->data;
     uint32_t* *ssq_data = ssq->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute the first row to avoid branching
     for (int sx, s=0, sq=0, x=0; x<sum->w; x++) {
@@ -326,7 +326,7 @@ void imlib_integral_mw_shift_ss(image_t *src, mw_image_t *sum, mw_image_t *ssq, 
 #else
     SWAP_PTRS(uint32_t **, sum->data, sum->swap);
     SWAP_PTRS(uint32_t **, ssq->data, ssq->swap);
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Pointer to the current sum and ssq data
 #ifndef STM32IPL
@@ -335,7 +335,7 @@ void imlib_integral_mw_shift_ss(image_t *src, mw_image_t *sum, mw_image_t *ssq, 
 #else
     uint32_t* *sum_data = sum->data;
     uint32_t* *ssq_data = ssq->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute the last n lines
     for (int sy, y=(sum->h - n); y<sum->h; y++, sum->y_offs++, ssq->y_offs++) {

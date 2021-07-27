@@ -23,7 +23,7 @@ const float __atanf_lut[4] = {
 };
 
 /* STM32IPL Functions moved to fmath.h to improve the visibility.
-float ALWAYS_INLINE fast_sqrtf(float x)
+float OMV_ATTR_ALWAYS_INLINE fast_sqrtf(float x)
 {
     asm volatile (
             "vsqrt.f32  %[r], %[x]\n"
@@ -32,7 +32,7 @@ float ALWAYS_INLINE fast_sqrtf(float x)
     return x;
 }
 
-int ALWAYS_INLINE fast_floorf(float x)
+int OMV_ATTR_ALWAYS_INLINE fast_floorf(float x)
 {
     int i;
     asm volatile (
@@ -42,7 +42,7 @@ int ALWAYS_INLINE fast_floorf(float x)
     return i;
 }
 
-int ALWAYS_INLINE fast_ceilf(float x)
+int OMV_ATTR_ALWAYS_INLINE fast_ceilf(float x)
 {
     int i;
     x += 0.9999f;
@@ -53,7 +53,7 @@ int ALWAYS_INLINE fast_ceilf(float x)
     return i;
 }
 
-int ALWAYS_INLINE fast_roundf(float x)
+int OMV_ATTR_ALWAYS_INLINE fast_roundf(float x)
 {
     int i;
     asm volatile (
@@ -62,12 +62,13 @@ int ALWAYS_INLINE fast_roundf(float x)
             : [x] "t"  (x));
     return i;
 }
-*/ /* STM32IPL  */
+*/ // STM32IPL
 
-#if defined ( __GNUC__ ) /* STM32IPL line added. */
+#if defined ( __GNUC__ ) // STM32IPL
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-#endif /* __GNUC__ */ /* STM32IPL line added. */
+#endif /* __GNUC__ */ // STM32IPL
+
 typedef union{
     uint32_t l;
     struct {
@@ -87,10 +88,10 @@ float fast_expf(float x)
     uint32_t packed = (e.s << 31) | (e.e << 23) | e.m <<3;
     return *((float*)&packed);
 }
-#if defined ( __GNUC__ ) /* STM32IPL */
+#if defined ( __GNUC__ ) // STM32IPL
 #pragma GCC diagnostic pop
-#endif /* __GNUC__ */ /* STM32IPL */
-/* 
+#endif /* __GNUC__ */ // STM32IPL
+/*
  * From Hackers Delight:
  * This is a very approximate but very fast version of acbrt. It is just eight
  * integer instructions (shift rights and adds), plus instructions to load the constant.
@@ -109,7 +110,7 @@ float fast_cbrtf(float x)
 }
 
 /* STM32IPL Function moved to fmath.h to allow their "visibility" as they are inline.
-float ALWAYS_INLINE fast_fabsf(float x)
+float OMV_ATTR_ALWAYS_INLINE fast_fabsf(float x)
 {
     asm volatile (
             "vabs.f32  %[r], %[x]\n"
@@ -117,7 +118,7 @@ float ALWAYS_INLINE fast_fabsf(float x)
             : [x] "t"  (x));
     return x;
 }
-*/ /* STM32IPL */
+*/ // STM32IPL
 
 inline float fast_atanf(float xx)
 {
@@ -182,7 +183,6 @@ float fast_atan2f(float y, float x)
   return (y == 0) ? 0 : ((y > 0) ? M_PI : -M_PI);
 }
 
-
 float fast_log2(float x)
 {
   union { float f; uint32_t i; } vx = { x };
@@ -204,4 +204,24 @@ float fast_powf(float a, float b)
     union { float d; int x; } u = { a };
     u.x = (int)((b * (u.x - 1064866805)) + 1064866805);
     return u.d;
+}
+
+void fast_get_min_max(float *data, size_t data_len, float *p_min, float *p_max)
+{
+    float min = FLT_MAX, max = -FLT_MAX;
+
+    for (size_t i = 0; i < data_len; i++) {
+        float temp = data[i];
+
+        if (temp < min) {
+            min = temp;
+        }
+
+        if (temp > max) {
+            max = temp;
+        }
+    }
+
+    *p_min = min;
+    *p_max = max;
 }

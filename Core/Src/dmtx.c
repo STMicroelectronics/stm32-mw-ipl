@@ -12,11 +12,11 @@
 #include <stdio.h>
 #include "imlib.h"
 #ifdef IMLIB_ENABLE_DATAMATRICES
-#if defined ( __GNUC__ ) /* STM32IPL */
+#if defined ( __GNUC__ ) // STM32IPL
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif /* __GNUC__ */ /* STM32IPL */
+#endif /* __GNUC__ */ // STM32IPL
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,9 +75,11 @@
  * \brief Main libdmtx header
  */
 
+/* STM32IPL: moved to imlib.h.
 #ifndef M_PI
 #define M_PI      3.14159265358979323846
 #endif
+*/
 
 #ifndef M_PI_2
 #define M_PI_2    1.57079632679489661923
@@ -6429,7 +6431,7 @@ void imlib_find_datamatrices(list_t *out, image_t *ptr, rectangle_t *roi, int ef
     if (ptr->bpp != IMAGE_BPP_GRAYSCALE) fb_free(); // grayscale_image;
 }
 
-#if defined ( __GNUC__ ) /* STM32IPL */
+#if defined ( __GNUC__ ) // STM32IPL
 #pragma GCC diagnostic pop
-#endif /* __GNUC__ */ /* STM32IPL */
+#endif /* __GNUC__ */ // STM32IPL
 #endif //IMLIB_ENABLE_DATAMATRICES

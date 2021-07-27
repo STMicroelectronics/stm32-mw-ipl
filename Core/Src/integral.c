@@ -35,7 +35,7 @@ void imlib_integral_image(image_t *src, i_image_t *sum)
 #else
     uint8_t *img_data = src->data;
     uint32_t *sum_data = sum->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute first column to avoid branching
     for (int s=0, x=0; x<src->w; x++) {
@@ -62,7 +62,7 @@ void imlib_integral_image_scaled(image_t *src, i_image_t *sum)
 #else
     uint8_t *img_data = src->data;
     uint32_t *sum_data = sum->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     int x_ratio = (int)((src->w<<16)/sum->w) +1;
     int y_ratio = (int)((src->h<<16)/sum->h) +1;
@@ -96,7 +96,7 @@ void imlib_integral_image_sq(image_t *src, i_image_t *sum)
 #else
     uint8_t *img_data = src->data;
     uint32_t *sum_data = sum->data;
-#endif /* STM32IPL */
+#endif // STM32IPL
 
     // Compute first column to avoid branching
     for (uint32_t s=0, x=0; x<src->w; x++) {

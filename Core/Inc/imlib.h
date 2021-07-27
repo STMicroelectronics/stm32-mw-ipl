@@ -24,14 +24,16 @@
 #include "fb_alloc.h"
 #include "umm_malloc.h"
 #include "xalloc.h"
-#else /* STM32IPL */
+#else // STM32IPL
 #include "memory_alloc.h"
-#endif /* STM32IPL */
+#endif // STM32IPL
 #include "array.h"
 #include "fmath.h"
 #include "collections.h"
 #include "imlib_config.h"
 
+//#include "stm32h7xx_hal.h"			// STM32IPL
+//#include "stm32h7xx_hal_dma2d.h"	// STM32IPL
 
 #ifdef STM32IPL
 __attribute__((weak)) void STM32Ipl_FaultHandler(const char *error);
@@ -39,8 +41,11 @@ __attribute__((weak)) void STM32Ipl_FaultHandler(const char *error);
 #define mp_obj_new_exception_msg(a,b) b
 extern void *unaligned_2_to_1_memcpy(void *dest, void *src, size_t n);
 extern void *unaligned_memcpy(void *dest, void *src, size_t n);
-#endif /* STM32IPL */
+#endif // STM32IPL
 
+#ifndef M_PI	// STM32IPL: moved here from other files.
+#define M_PI      3.14159265358979323846
+#endif
 
 
 #define IM_LOG2_2(x)    (((x) &                0x2ULL) ? ( 2                        ) :             1) // NO ({ ... }) !
@@ -55,12 +60,12 @@ extern void *unaligned_memcpy(void *dest, void *src, size_t n);
 #define IM_MIN(a,b)     ({ (a) < (b) ? (a) : (b); })
 #define IM_DIV(a,b)     ({ (b) ? ((a) / (b)) : 0; })
 #define IM_MOD(a,b)     ({ (b) ? ((a) % (b)) : 0; })
-#else /* STM32IPL */
+#else // STM32IPL
 #define IM_MAX(a,b)     ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 #define IM_MIN(a,b)     ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 #define IM_DIV(a,b)     ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _b ? (_a / _b) : 0; })
 #define IM_MOD(a,b)     ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _b ? (_a % _b) : 0; })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define INT8_T_BITS     (sizeof(int8_t) * 8)
 #define INT8_T_MASK     (INT8_T_BITS - 1)
@@ -94,12 +99,15 @@ extern void *unaligned_memcpy(void *dest, void *src, size_t n);
 #define UINT64_T_MASK   (UINT64_T_BITS - 1)
 #define UINT64_T_SHIFT  IM_LOG2(UINT64_T_MASK)
 
-#ifndef M_PI /* STMIPL added */
-#define M_PI		3.14159265358979323846
-#endif /*M_PI */ /* STMIPL */
-
 #define IM_DEG2RAD(x)   (((x)*M_PI)/180)
 #define IM_RAD2DEG(x)   (((x)*180)/M_PI)
+
+// STM32IPL
+typedef struct _rgb888_t {
+	uint8_t b;
+	uint8_t g;
+	uint8_t r;
+} rgb888_t;
 
 /////////////////
 // Point Stuff //
@@ -197,7 +205,7 @@ color_thresholds_list_lnk_data_t;
     (abs(COLOR_RGB565_TO_G6(pixel0) - COLOR_RGB565_TO_G6(pixel1)) <= COLOR_RGB565_TO_G6(threshold)) && \
     (abs(COLOR_RGB565_TO_B5(pixel0) - COLOR_RGB565_TO_B5(pixel1)) <= COLOR_RGB565_TO_B5(threshold)); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define COLOR_THRESHOLD_BINARY(pixel, threshold, invert) \
 ({ \
     __typeof__ (pixel) _pixel = (pixel); \
@@ -252,7 +260,7 @@ color_thresholds_list_lnk_data_t;
     (abs(COLOR_RGB565_TO_G6(_pixel0) - COLOR_RGB565_TO_G6(_pixel1)) <= COLOR_RGB565_TO_G6(_threshold)) && \
     (abs(COLOR_RGB565_TO_B5(_pixel0) - COLOR_RGB565_TO_B5(_pixel1)) <= COLOR_RGB565_TO_B5(_threshold)); \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define COLOR_BINARY_MIN 0
 #define COLOR_BINARY_MAX 1
@@ -302,14 +310,14 @@ color_thresholds_list_lnk_data_t;
     __pixel = (__pixel >> 8) & 0xF8; \
     __pixel | (__pixel >> 5); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define COLOR_RGB565_TO_R8(pixel) \
 ({ \
     __typeof__ (pixel) __pixel = (pixel); \
     __pixel = (__pixel >> 8) & 0xF8; \
     __pixel | (__pixel >> 5); \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define COLOR_RGB565_TO_G6(pixel) (((pixel) >> 5) & 0x3F)
 #ifdef STM32IPL
@@ -319,14 +327,14 @@ color_thresholds_list_lnk_data_t;
     __pixel = (__pixel >> 3) & 0xFC; \
     __pixel | (__pixel >> 6); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define COLOR_RGB565_TO_G8(pixel) \
 ({ \
     __typeof__ (pixel) __pixel = (pixel); \
     __pixel = (__pixel >> 3) & 0xFC; \
     __pixel | (__pixel >> 6); \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define COLOR_RGB565_TO_B5(pixel) ((pixel) & 0x1F)
 #ifdef STM32IPL
@@ -336,14 +344,14 @@ color_thresholds_list_lnk_data_t;
     __pixel = (__pixel << 3) & 0xF8; \
     __pixel | (__pixel >> 5); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define COLOR_RGB565_TO_B8(pixel) \
 ({ \
     __typeof__ (pixel) __pixel = (pixel); \
     __pixel = (__pixel << 3) & 0xF8; \
     __pixel | (__pixel >> 5); \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define COLOR_R5_G6_B5_TO_RGB565(r5, g6, b5) (((r5) << 11) | ((g6) << 5) | (b5))
 #define COLOR_R8_G8_B8_TO_RGB565(r8, g8, b8) ((((r8) & 0xF8) << 8) | (((g8) & 0xFC) << 3) | ((b8) >> 3))
@@ -352,12 +360,12 @@ color_thresholds_list_lnk_data_t;
 #ifdef STM32IPL
 #define COLOR_RGB565_TO_Y(rgb565) \
 ({ \
-    int r = COLOR_RGB565_TO_R8(rgb565); \
-    int g = COLOR_RGB565_TO_G8(rgb565); \
-    int b = COLOR_RGB565_TO_B8(rgb565); \
+    int r = COLOR_RGB565_TO_R8((rgb565)); \
+    int g = COLOR_RGB565_TO_G8((rgb565)); \
+    int b = COLOR_RGB565_TO_B8((rgb565)); \
     COLOR_RGB888_TO_Y(r, g, b); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define COLOR_RGB565_TO_Y(rgb565) \
 ({ \
     __typeof__ (rgb565) __rgb565 = (rgb565); \
@@ -366,44 +374,74 @@ color_thresholds_list_lnk_data_t;
     int b = COLOR_RGB565_TO_B8(__rgb565); \
     COLOR_RGB888_TO_Y(r, g, b); \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define COLOR_Y_TO_RGB888(pixel) ((pixel) * 0x010101)
 #ifdef STM32IPL
 #define COLOR_Y_TO_RGB565(pixel) \
 ({ \
-    int __rb_pixel = (pixel >> 3) & 0x1F; \
-    (__rb_pixel * 0x0801) + ((pixel << 3) & 0x7E0); \
+    int __rb_pixel = ((pixel) >> 3) & 0x1F; \
+    (__rb_pixel * 0x0801) + (((pixel) << 3) & 0x7E0); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define COLOR_Y_TO_RGB565(pixel) \
 ({ \
     __typeof__ (pixel) __pixel = (pixel); \
     int __rb_pixel = (__pixel >> 3) & 0x1F; \
     (__rb_pixel * 0x0801) + ((__pixel << 3) & 0x7E0); \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
+#define COLOR_RGB888_TO_U(r8, g8, b8) ((((r8) * -21) - ((g8) * 43) + ((b8) * 64)) >> 7) // -0.168736R - 0.331264G + 0.5B
+#ifdef STM32IPL
+#define COLOR_RGB565_TO_U(rgb565) \
+({ \
+    int r = COLOR_RGB565_TO_R8((rgb565)); \
+    int g = COLOR_RGB565_TO_G8((rgb565)); \
+    int b = COLOR_RGB565_TO_B8((rgb565)); \
+    COLOR_RGB888_TO_U(r, g, b); \
+})
+#else // STM32IPL
+#define COLOR_RGB565_TO_U(rgb565) \
+({ \
+    __typeof__ (rgb565) __rgb565 = (rgb565); \
+    int r = COLOR_RGB565_TO_R8(__rgb565); \
+    int g = COLOR_RGB565_TO_G8(__rgb565); \
+    int b = COLOR_RGB565_TO_B8(__rgb565); \
+    COLOR_RGB888_TO_U(r, g, b); \
+})
+#endif // STM32IPL
 
-//extern const int8_t lab_table[196608];
-//extern const int8_t yuv_table[196608];
+#define COLOR_RGB888_TO_V(r8, g8, b8) ((((r8) * 64) - ((g8) * 54) - ((b8) * 10)) >> 7) // 0.5R - 0.418688G - 0.081312B
+#ifdef STM32IPL
+#define COLOR_RGB565_TO_V(rgb565) \
+({ \
+    int r = COLOR_RGB565_TO_R8((rgb565)); \
+    int g = COLOR_RGB565_TO_G8((rgb565)); \
+    int b = COLOR_RGB565_TO_B8((rgb565)); \
+    COLOR_RGB888_TO_V(r, g, b); \
+})
+#else // STM32IPL
+#define COLOR_RGB565_TO_V(rgb565) \
+({ \
+    int r = COLOR_RGB565_TO_R8(__rgb565); \
+    int g = COLOR_RGB565_TO_G8(__rgb565); \
+    int b = COLOR_RGB565_TO_B8(__rgb565); \
+    COLOR_RGB888_TO_V(r, g, b); \
+})
+#endif // STM32IPL
+
+extern const int8_t lab_table[196608/2];
+extern const int8_t yuv_table[196608];
 
 #ifdef IMLIB_ENABLE_LAB_LUT
-#define COLOR_RGB565_TO_L(pixel) lab_table[(pixel) * 3]
-#define COLOR_RGB565_TO_A(pixel) lab_table[((pixel) * 3) + 1]
-#define COLOR_RGB565_TO_B(pixel) lab_table[((pixel) * 3) + 2]
+#define COLOR_RGB565_TO_L(pixel) lab_table[((pixel>>1) * 3) + 0]
+#define COLOR_RGB565_TO_A(pixel) lab_table[((pixel>>1) * 3) + 1]
+#define COLOR_RGB565_TO_B(pixel) lab_table[((pixel>>1) * 3) + 2]
 #else
 #define COLOR_RGB565_TO_L(pixel) imlib_rgb565_to_l(pixel)
 #define COLOR_RGB565_TO_A(pixel) imlib_rgb565_to_a(pixel)
 #define COLOR_RGB565_TO_B(pixel) imlib_rgb565_to_b(pixel)
-#endif
-
-#ifdef IMLIB_ENABLE_YUV_LUT
-#define COLOR_RGB565_TO_U(pixel) yuv_table[((pixel) * 3) + 1]
-#define COLOR_RGB565_TO_V(pixel) yuv_table[((pixel) * 3) + 2]
-#else
-#define COLOR_RGB565_TO_U(pixel) imlib_rgb565_to_u(pixel)
-#define COLOR_RGB565_TO_V(pixel) imlib_rgb565_to_v(pixel)
 #endif
 
 #define COLOR_LAB_TO_RGB565(l, a, b) imlib_lab_to_rgb(l, a, b)
@@ -461,7 +499,7 @@ color_thresholds_list_lnk_data_t;
     g  = g >> 2;                                             \
     b  = b >> 3;                                             \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define COLOR_BAYER_TO_RGB565(img, x, y, r, g, b)            \
 ({                                                           \
     __typeof__ (x) __x = (x);                                \
@@ -515,14 +553,17 @@ color_thresholds_list_lnk_data_t;
     g  = g >> 2;                                             \
     b  = b >> 3;                                             \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define COLOR_BINARY_TO_GRAYSCALE(pixel) ((pixel) * COLOR_GRAYSCALE_MAX)
 #define COLOR_BINARY_TO_RGB565(pixel) COLOR_YUV_TO_RGB565(((pixel) ? 127 : -128), 0, 0)
-#define COLOR_RGB565_TO_BINARY(pixel) (COLOR_RGB565_TO_Y((pixel)) > (((COLOR_Y_MAX - COLOR_Y_MIN) / 2) + COLOR_Y_MIN))
+#define COLOR_RGB565_TO_BINARY(pixel) (COLOR_RGB565_TO_Y(pixel) > (((COLOR_Y_MAX - COLOR_Y_MIN) / 2) + COLOR_Y_MIN))
 #define COLOR_RGB565_TO_GRAYSCALE(pixel) COLOR_RGB565_TO_Y(pixel)
 #define COLOR_GRAYSCALE_TO_BINARY(pixel) ((pixel) > (((COLOR_GRAYSCALE_MAX - COLOR_GRAYSCALE_MIN) / 2) + COLOR_GRAYSCALE_MIN))
 #define COLOR_GRAYSCALE_TO_RGB565(pixel) COLOR_YUV_TO_RGB565(((pixel) - 128), 0, 0)
+
+// STM32IPL
+#define COLOR_RGB888_TO_BINARY(r8, g8, b8) ((COLOR_RGB888_TO_Y(r8, g8, b8)) > (((COLOR_Y_MAX - COLOR_Y_MIN) / 2) + COLOR_Y_MIN))
 
 typedef enum {
     COLOR_PALETTE_RAINBOW,
@@ -537,6 +578,15 @@ extern const uint16_t ironbow_table[256];
 // Image Stuff //
 /////////////////
 
+typedef enum {
+    PIXFORMAT_INVALID = 0,
+    PIXFORMAT_BINARY,    // 1BPP/BINARY
+    PIXFORMAT_GRAYSCALE, // 1BPP/GRAYSCALE
+    PIXFORMAT_RGB565,    // 2BPP/RGB565
+    PIXFORMAT_YUV422,    // 2BPP/YUV422
+    PIXFORMAT_BAYER,     // 1BPP/RAW
+    PIXFORMAT_JPEG,      // JPEG/COMPRESSED
+} pixformat_t;
 
 typedef enum image_bpp
 {
@@ -544,7 +594,8 @@ typedef enum image_bpp
     IMAGE_BPP_GRAYSCALE,    // BPP = 1
     IMAGE_BPP_RGB565,       // BPP = 2
     IMAGE_BPP_BAYER,        // BPP = 3
-    IMAGE_BPP_JPEG,         // BPP > 3
+	IMAGE_BPP_RGB888,       // BPP = 4	STM32IPL
+    IMAGE_BPP_JPEG          // BPP > 4
 }
 image_bpp_t;
 
@@ -555,7 +606,7 @@ typedef struct image {
     union {
         uint8_t *pixels;
         uint8_t *data;
-    };
+	};
 } image_t;
 
 void image_init(image_t *ptr, int w, int h, int bpp, void *data);
@@ -578,7 +629,7 @@ bool image_get_mask_pixel(image_t *ptr, int x, int y);
     (image->bpp == IMAGE_BPP_RGB565) || \
     (image->bpp == IMAGE_BPP_BAYER); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define IMAGE_IS_MUTABLE(image) \
 ({ \
     __typeof__ (image) _image = (image); \
@@ -595,7 +646,7 @@ bool image_get_mask_pixel(image_t *ptr, int x, int y);
     (_image->bpp == IMAGE_BPP_RGB565) || \
     (_image->bpp == IMAGE_BPP_BAYER); \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define IMAGE_BINARY_LINE_LEN(image) (((image)->w + UINT32_T_MASK) >> UINT32_T_SHIFT)
 #define IMAGE_BINARY_LINE_LEN_BYTES(image) (IMAGE_BINARY_LINE_LEN(image) * sizeof(uint32_t))
@@ -648,7 +699,7 @@ bool image_get_mask_pixel(image_t *ptr, int x, int y);
 ({ \
     ((uint16_t *)(image)->data)[((image)->w * (y)) + (x)] = (v); \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define IMAGE_GET_BINARY_PIXEL(image, x, y) \
 ({ \
     __typeof__ (image) _image = (image); \
@@ -717,10 +768,34 @@ bool image_get_mask_pixel(image_t *ptr, int x, int y);
     __typeof__ (v) _v = (v); \
     ((uint16_t *) _image->data)[(_image->w * _y) + _x] = _v; \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
+
+// STM32IPL
+#ifdef STM32IPL
+#define IMAGE_PUT_RGB888_PIXEL(image, x, y, v) \
+({ \
+    rgb888_t rgb888; \
+	rgb888.r = ((v) >> 16) & 0xFF; \
+	rgb888.g = ((v) >> 8) & 0xFF; \
+	rgb888.b = (v) & 0xFF; \
+    ((rgb888_t *)image->data)[(image->w * (y)) + (x)] = rgb888; \
+})
+#else // STM32IPL
+#define IMAGE_PUT_RGB888_PIXEL(image, x, y, v) \
+({ \
+    __typeof__ (image) _image = (image); \
+    __typeof__ (x) _x = (x); \
+    __typeof__ (y) _y = (y); \
+    __typeof__ (v) _v = (v); \
+    rgb888_t rgb888; \
+	rgb888.r = (_v >> 16) & 0xFF; \
+	rgb888.g = (_v >> 8) & 0xFF; \
+	rgb888.b = _v & 0xFF; \
+    ((rgb888_t *) _image->data)[(_image->w * _y) + _x] = rgb888; \
+})
+#endif // STM32IPL
 
 // Fast Stuff //
-
 #ifdef STM32IPL
 #define IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(image, y) \
 ({ \
@@ -778,7 +853,7 @@ bool image_get_mask_pixel(image_t *ptr, int x, int y);
 ({ \
     row_ptr[(x)] = v; \
 })
-#else /* STM32IPL */
+#else // STM32IPL
 #define IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(image, y) \
 ({ \
     __typeof__ (image) _image = (image); \
@@ -860,7 +935,55 @@ bool image_get_mask_pixel(image_t *ptr, int x, int y);
     __typeof__ (v) _v = (v); \
     _row_ptr[_x] = _v; \
 })
-#endif /* STM32IPL */
+#endif // STM32IPL
+
+#ifdef STM32IPL
+// STM32IPL
+#define IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(image, y) \
+({ \
+    ((rgb888_t*)(image->data)) + ((image)->w * (y)); \
+})
+
+// STM32IPL
+#define IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x) \
+({ \
+    (row_ptr)[(x)]; \
+})
+
+// STM32IPL
+#define IMAGE_PUT_RGB888_PIXEL_FAST(row_ptr, x, v) \
+({ \
+    (row_ptr)[(x)] = (v); \
+})
+#endif // STM32IPL
+
+// FIXME buttavia
+#if 0
+// STM32IPL
+#define IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(image, y) \
+({ \
+    __typeof__ (image) _image = (image); \
+    __typeof__ (y) _y = (y); \
+    ((rgb888_t *)_image->data) + (_image->w * _y); \
+})
+
+// STM32IPL
+#define IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x) \
+({ \
+    __typeof__ (row_ptr) _row_ptr = (row_ptr); \
+    __typeof__ (x) _x = (x); \
+    _row_ptr[_x]; \
+})
+
+// STM32IPL
+#define IMAGE_PUT_RGB888_PIXEL_FAST(row_ptr, x, v) \
+({ \
+    __typeof__ (row_ptr) _row_ptr = (row_ptr); \
+    __typeof__ (x) _x = (x); \
+    __typeof__ (v) _v = (v); \
+    _row_ptr[_x] = _v; \
+})
+#endif
 
 // Old Image Macros - Will be refactor and removed. But, only after making sure through testing new macros work.
 
@@ -872,27 +995,27 @@ extern const int kernel_high_pass_3[9];
 
 #ifdef STM32IPL
 #define IM_RGB5652L(p) \
-    ({lab_table[(p) * 3];})
+    ({lab_table[(((p) >> 1) * 3) + 0];})
 
 #define IM_RGB5652A(p) \
-    ({lab_table[((p) * 3) + 1];})
+    ({lab_table[(((p) >> 1) * 3) + 1];})
 
 #define IM_RGB5652B(p) \
-    ({lab_table[((p) * 3) + 2];})
-#else /* STM32IPL */
+    ({lab_table[(((p) >> 1) * 3) + 2];})
+#else // STM32IPL
 #define IM_RGB5652L(p) \
     ({ __typeof__ (p) _p = (p); \
-       lab_table[_p * 3]; })
+       lab_table[((_p>>1) * 3) + 0]; })
 
 #define IM_RGB5652A(p) \
     ({ __typeof__ (p) _p = (p); \
-       lab_table[(_p * 3) + 1]; })
+       lab_table[((_p>>1) * 3) + 1]; })
 
 #define IM_RGB5652B(p) \
     ({ __typeof__ (p) _p = (p); \
-       lab_table[(_p * 3) + 2]; })
-#endif /* STM32IPL */
-      
+       lab_table[((_p>>1) * 3) + 2]; })
+#endif // STM32IPL
+
 // Grayscale maxes
 #define IM_MAX_GS (255)
 
@@ -950,8 +1073,15 @@ extern const int kernel_high_pass_3[9];
 #define IM_GET_RAW_PIXEL_CHECK_BOUNDS_Y(img, x, y) \
     ({((uint8_t*)img->pixels)[((((y) < 0) ? 0 : ((y) >= img->h) ? (img->h - 1) : (y)) * img->w) + (x)];})
 
+/* STM32IPL
 #define IM_GET_RAW_PIXEL_CHECK_BOUNDS_XY(img, x, y) \
     ({((uint8_t*)img->pixels)[(((y) < 0) ? 0 : ((y) >= img->h) ? (img->h - 1): (y) * img->w) + ((x) < 0) ? 0 : ((x) >= img->w) ? (img->w - 1): (x)];})
+*/
+#define IM_GET_RAW_PIXEL_CHECK_BOUNDS_XY(img, x, y)	\
+	({((uint8_t*)img->pixels)[(((y) < 0) ? 0 : (((y) >= img->h) ? (img->h - 1) : ((y) * img->w))) + \
+							  (((x) < 0) ? 0 : (((x) >= img->w) ? (img->w - 1) : (x)))];})	//STM32IPL
+//#define IM_GET_RAW_PIXEL_CHECK_BOUNDS_XY(img, x, y) ({((uint8_t*)img->pixels)[(((y) < 0) ? 0 : ((y) >= img->h) ? (img->h - 1) : (y) * img->w) + (((x) < 0) ? 0 : (((x) >= img->w) ? (img->w - 1): (x)))];})
+
 
 #define IM_GET_RGB565_PIXEL(img, x, y) \
     ({((uint16_t*)img->pixels)[((y) * img->w) + (x)];})
@@ -964,7 +1094,7 @@ extern const int kernel_high_pass_3[9];
       
 #define IM_EQUAL(img0, img1) \
     ({(img0->w==img1->w)&&(img0->h==img1->h)&&(img0->bpp==img1->bpp);})
-#else /* STM32IPL */
+#else // STM32IPL
 #define IM_IS_BINARY(img) \
     ({ __typeof__ (img) _img = (img); \
        _img->bpp == 0; })
@@ -1057,7 +1187,7 @@ extern const int kernel_high_pass_3[9];
     ({ __typeof__ (img0) _img0 = (img0); \
        __typeof__ (img1) _img1 = (img1); \
        (_img0->w==_img1->w)&&(_img0->h==_img1->h)&&(_img0->bpp==_img1->bpp); })
-#endif /* STM32IPL */
+#endif // STM32IPL
 
 #define IM_TO_GS_PIXEL(img, x, y)    \
     (img->bpp == 1 ? img->pixels[((y)*img->w)+(x)] : COLOR_RGB565_TO_Y(((uint16_t*)img->pixels)[((y)*img->w)+(x)]) )
@@ -1338,12 +1468,13 @@ typedef struct find_barcodes_list_lnk_data {
 } find_barcodes_list_lnk_data_t;
 
 typedef enum image_hint {
-    IMAGE_HINT_AREA = 1,
-    IMAGE_HINT_BILINEAR = 2,
-    IMAGE_HINT_BICUBIC = 4,
-    IMAGE_HINT_CENTER = 128,
-    IMAGE_HINT_EXTRACT_RGB_CHANNEL_FIRST = 256,
-    IMAGE_HINT_APPLY_COLOR_PALETTE_FIRST = 512
+    IMAGE_HINT_AREA = 1 << 0,
+    IMAGE_HINT_BILINEAR = 1 << 1,
+    IMAGE_HINT_BICUBIC = 1 << 2,
+    IMAGE_HINT_CENTER = 1 << 7,
+    IMAGE_HINT_EXTRACT_RGB_CHANNEL_FIRST = 1 << 8,
+    IMAGE_HINT_APPLY_COLOR_PALETTE_FIRST = 1 << 9,
+    IMAGE_HINT_BLACK_BACKGROUND = 1 << 31
 } image_hint_t;
 
 typedef struct imlib_draw_row_data {
@@ -1353,19 +1484,31 @@ typedef struct imlib_draw_row_data {
     int alpha; // user
     const uint16_t *color_palette; // user
     const uint8_t *alpha_palette; // user
+    bool black_background; // user
+    void *callback; // user
+    void *dst_row_override; // user
     int toggle; // private
     void *row_buffer[2]; // private
+    #ifdef IMLIB_ENABLE_DMA2D
+    bool dma2d_request; // user
+    bool dma2d_enabled; // private
+    bool dma2d_initialized; // private
+    DMA2D_HandleTypeDef dma2d; // private
+    #endif
     long smuad_alpha; // private
     uint32_t *smuad_alpha_palette; // private
 } imlib_draw_row_data_t;
+
+typedef void (*imlib_draw_row_callback_t)(int x_start, int x_end, int y_row, imlib_draw_row_data_t *data);
+
+// Generic Helper Functions
+void imlib_fill_image_from_float(image_t *img, int w, int h, float *data, float min, float max,
+                                 bool mirror, bool flip, bool dst_transpose, bool src_transpose);
 
 /* Color space functions */
 int8_t imlib_rgb565_to_l(uint16_t pixel);
 int8_t imlib_rgb565_to_a(uint16_t pixel);
 int8_t imlib_rgb565_to_b(uint16_t pixel);
-int8_t imlib_rgb565_to_y(uint16_t pixel);
-int8_t imlib_rgb565_to_u(uint16_t pixel);
-int8_t imlib_rgb565_to_v(uint16_t pixel);
 uint16_t imlib_lab_to_rgb(uint8_t l, int8_t a, int8_t b);
 uint16_t imlib_yuv_to_rgb(uint8_t y, int8_t u, int8_t v);
 void imlib_bayer_to_rgb565(image_t *img, int w, int h, int xoffs, int yoffs, uint16_t *rgbbuf);
@@ -1373,7 +1516,42 @@ void imlib_bayer_to_y(image_t *img, int x_offset, int y_offset, int width, uint8
 void imlib_bayer_to_binary(image_t *img, int x_offset, int y_offset, int width, uint8_t *binary);
 bool imlib_pixel_to_binary(int bpp, uint32_t pixel);
 
+/* Image file functions */
+/* STM32IPL
+void ppm_read_geometry(FIL *fp, image_t *img, const char *path, ppm_read_settings_t *rs);
+void ppm_read_pixels(FIL *fp, image_t *img, int n_lines, ppm_read_settings_t *rs);
+void ppm_read(image_t *img, const char *path);
+void ppm_write_subimg(image_t *img, const char *path, rectangle_t *r);
+bool bmp_read_geometry(FIL *fp, image_t *img, const char *path, bmp_read_settings_t *rs);
+void bmp_read_pixels(FIL *fp, image_t *img, int n_lines, bmp_read_settings_t *rs);
+void bmp_read(image_t *img, const char *path);
+void bmp_write_subimg(image_t *img, const char *path, rectangle_t *r);
+bool jpeg_compress(image_t *src, image_t *dst, int quality, bool realloc);
+void jpeg_read_geometry(FIL *fp, image_t *img, const char *path, jpg_read_settings_t *rs);
+void jpeg_read_pixels(FIL *fp, image_t *img);
+void jpeg_read(image_t *img, const char *path);
+void jpeg_write(image_t *img, const char *path, int quality);
+bool imlib_read_geometry(FIL *fp, image_t *img, const char *path, img_read_settings_t *rs);
+ STM32IPL */
 void imlib_image_operation(image_t *img, const char *path, image_t *other, int scalar, line_op_t op, void *data);
+/* STM32IPL
+ * void imlib_load_image(image_t *img, const char *path);
+void imlib_save_image(image_t *img, const char *path, rectangle_t *roi, int quality);
+ STM32IPL */
+
+/* GIF functions */
+/* STM32IPL
+void gif_open(FIL *fp, int width, int height, bool color, bool loop);
+void gif_add_frame(FIL *fp, image_t *img, uint16_t delay);
+void gif_close(FIL *fp);
+STM32IPL */
+
+/* MJPEG functions */
+/* STM32IPL
+void mjpeg_open(FIL *fp, int width, int height);
+void mjpeg_add_frame(FIL *fp, uint32_t *frames, uint32_t *bytes, image_t *img, int quality);
+void mjpeg_close(FIL *fp, uint32_t *frames, uint32_t *bytes, float fps);
+STM32IPL */
 
 /* Point functions */
 point_t *point_alloc(int16_t x, int16_t y);
@@ -1428,6 +1606,31 @@ long imlib_integral_mw_lookup(mw_image_t *sum, int x, int y, int w, int h);
 int imlib_load_cascade(struct cascade* cascade, const char *path);
 array_t *imlib_detect_objects(struct image *image, struct cascade *cascade, struct rectangle *roi);
 
+/* Corner detectors */
+/* STM32IPL
+void fast_detect(image_t *image, array_t *keypoints, int threshold, rectangle_t *roi);
+void agast_detect(image_t *image, array_t *keypoints, int threshold, rectangle_t *roi);
+STM32IPL */
+
+/* ORB descriptor */
+/* STM32IPL
+array_t *orb_find_keypoints(image_t *image, bool normalized, int threshold,
+        float scale_factor, int max_keypoints, corner_detector_t corner_detector, rectangle_t *roi);
+int orb_match_keypoints(array_t *kpts1, array_t *kpts2, int *match, int threshold, rectangle_t *r, point_t *c, int *angle);
+int orb_filter_keypoints(array_t *kpts, rectangle_t *r, point_t *c);
+int orb_save_descriptor(FIL *fp, array_t *kpts);
+int orb_load_descriptor(FIL *fp, array_t *kpts);
+float orb_cluster_dist(int cx, int cy, void *kp);
+STM32IPL */
+
+/* LBP Operator */
+/* STM32IPL
+uint8_t *imlib_lbp_desc(image_t *image, rectangle_t *roi);
+int imlib_lbp_desc_distance(uint8_t *d0, uint8_t *d1);
+int imlib_lbp_desc_save(FIL *fp, uint8_t *desc);
+int imlib_lbp_desc_load(FIL *fp, uint8_t **desc);
+STM32IPL */
+
 /* Iris detector */
 void imlib_find_iris(image_t *src, point_t *iris, rectangle_t *roi);
 
@@ -1446,9 +1649,15 @@ void imlib_find_hog(image_t *src, rectangle_t *roi, int cell_size);
 void imlib_zero(image_t *img, image_t *mask, bool invert);
 void imlib_draw_row_setup(imlib_draw_row_data_t *data);
 void imlib_draw_row_teardown(imlib_draw_row_data_t *data);
+#ifdef IMLIB_ENABLE_DMA2D
+void imlib_draw_row_deinit_all();
+#endif
 void *imlib_draw_row_get_row_buffer(imlib_draw_row_data_t *data);
 void imlib_draw_row_put_row_buffer(imlib_draw_row_data_t *data, void *row_buffer);
 void imlib_draw_row(int x_start, int x_end, int y_row, imlib_draw_row_data_t *data);
+bool imlib_draw_image_rectangle(image_t *dst_img, image_t *src_img, int dst_x_start, int dst_y_start, float x_scale, float y_scale, rectangle_t *roi,
+                                int alpha, const uint8_t *alpha_palette, image_hint_t hint,
+                                int *x0, int *x1, int *y0, int *y1);
 void imlib_flood_fill_int(image_t *out, image_t *img, int x, int y,
                           int seed_threshold, int floating_threshold,
                           flood_fill_call_back_t cb, void *data);
@@ -1463,7 +1672,8 @@ void imlib_draw_ellipse(image_t *img, int cx, int cy, int rx, int ry, int rotati
 void imlib_draw_string(image_t *img, int x_off, int y_off, const char *str, int c, float scale, int x_spacing, int y_spacing, bool mono_space,
                        int char_rotation, bool char_hmirror, bool char_vflip, int string_rotation, bool string_hmirror, bool string_hflip);
 void imlib_draw_image(image_t *dst_img, image_t *src_img, int dst_x_start, int dst_y_start, float x_scale, float y_scale, rectangle_t *roi,
-                      int rgb_channel, int alpha, const uint16_t *color_palette, const uint8_t *alpha_palette, image_hint_t hint);
+                      int rgb_channel, int alpha, const uint16_t *color_palette, const uint8_t *alpha_palette, image_hint_t hint,
+                      imlib_draw_row_callback_t callback, void *dst_row_override);
 void imlib_flood_fill(image_t *img, int x, int y,
                       float seed_threshold, float floating_threshold,
                       int c, bool invert, bool clear_background, image_t *mask);
@@ -1507,9 +1717,6 @@ void imlib_cartoon_filter(image_t *img, float seed_threshold, float floating_thr
 // Image Correction
 void imlib_logpolar_int(image_t *dst, image_t *src, rectangle_t *roi, bool linear, bool reverse); // helper/internal
 void imlib_logpolar(image_t *img, bool linear, bool reverse);
-void imlib_remove_shadows(image_t *img, const char *path, image_t *other, int scalar, bool single);
-void imlib_chrominvar(image_t *img);
-void imlib_illuminvar(image_t *img);
 // Lens/Rotation Correction
 void imlib_lens_corr(image_t *img, float strength, float zoom, float x_corr, float y_corr);
 void imlib_rotation_corr(image_t *img, float x_rotation, float y_rotation,
@@ -1535,6 +1742,7 @@ size_t trace_line(image_t *ptr, line_t *l, int *theta_buffer, uint32_t *mag_buff
 void merge_alot(list_t *out, int threshold, int theta_threshold); // helper/internal
 void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int x_stride, unsigned int y_stride,
                       uint32_t threshold, unsigned int theta_margin, unsigned int rho_margin);
+void imlib_lsd_find_line_segments(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int merge_distance, unsigned int max_theta_diff);
 void imlib_find_line_segments(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int x_stride, unsigned int y_stride,
                               uint32_t threshold, unsigned int theta_margin, unsigned int rho_margin,
                               uint32_t segment_threshold);
@@ -1547,6 +1755,8 @@ void imlib_find_rects(list_t *out, image_t *ptr, rectangle_t *roi,
 void imlib_find_qrcodes(list_t *out, image_t *ptr, rectangle_t *roi);
 void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_families_t families,
                           float fx, float fy, float cx, float cy);
+void imlib_find_datamatrices(list_t *out, image_t *ptr, rectangle_t *roi, int effort);
+void imlib_find_barcodes(list_t *out, image_t *ptr, rectangle_t *roi);
 // Template Matching
 void imlib_phasecorrelate(image_t *img0, image_t *img1, rectangle_t *roi0, rectangle_t *roi1, bool logpolar, bool fix_rotation_scale,
                           float *x_translation, float *y_translation, float *rotation, float *scale, float *response);

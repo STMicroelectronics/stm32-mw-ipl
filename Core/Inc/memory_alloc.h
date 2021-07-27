@@ -1,12 +1,12 @@
 /**
  ******************************************************************************
-  * @file memory_alloc.h
-  * @author  SRA AI Application Team
-  * @brief memory allocation wrapper
+ * @file   memory_alloc.h
+ * @author SRA AI Application Team
+ * @brief  STM32 Image Processing Library - memory allocation wrapper header file
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.</center></h2>
  *
  * Portions of this file is part of the OpenMV project.
@@ -22,48 +22,43 @@
  ******************************************************************************
  */
 
+#ifndef ___MEMORY_ALLOC_H_
+#define ___MEMORY_ALLOC_H_
 
-
-#ifndef MEMORY_ALLOC_H_
-#define MEMORY_ALLOC_H_
-
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdint.h>
-#include "umm_malloc.h"
+#include "umm_malloc.h" // CMARCH: 2021.07.22 provo a riabilitarlo
 
-/*
- * frame buffer allocation
- * for openmv imlib internals do not use !!
+#define FB_ALLOC_NO_HINT		0
+#define FB_ALLOC_PREFER_SPEED	1
+#define FB_ALLOC_PREFER_SIZE	2
+
+void umm_alloc_fail(void);
+
+/* General purpose allocation functions.
+ * They can be used at app side.
  */
-// FB ALLOC
-#define FB_ALLOC_NO_HINT 0
-#define FB_ALLOC_PREFER_SPEED 1
-#define FB_ALLOC_PREFER_SIZE 2
+void* xalloc(uint32_t size);
+void* xalloc_try_alloc(uint32_t size);
+void* xalloc0(uint32_t size);
+void xfree(void *mem);
+void* xrealloc(void *mem, uint32_t size);
+
+/* Frame buffer allocation functions.
+ * They are for openmv internals only.
+ * Do not use at app side!
+ */
+void fb_init(void);
 void fb_alloc_fail(void);
 uint32_t fb_avail(void);
 void fb_alloc_mark(void);
 void fb_alloc_free_till_mark(void);
-void *fb_alloc(uint32_t size, int hints);
-void *fb_alloc0(uint32_t size, int hints);
-void *fb_alloc_all(uint32_t *size, int hints); // returns pointer and sets size
-void *fb_alloc0_all(uint32_t *size, int hints); // returns pointer and sets size
+void* fb_alloc(uint32_t size, int hints);
+void* fb_alloc0(uint32_t size, int hints);
+void* fb_alloc_all(uint32_t *size, int hints);
+void* fb_alloc0_all(uint32_t *size, int hints);
 void fb_free(void);
 void fb_free_all(void);
-void fb_init(void);
 
 
-/*
- * general purpose allocation
- */
-// X ALLOC
-void *xalloc(uint32_t size);
-void *xalloc_try_alloc(uint32_t size);
-void *xalloc0(uint32_t size);
-void xfree(void *mem);
-void *xrealloc(void *mem, uint32_t size);
-
-// umm_malloc
-void umm_alloc_fail(void);
-
-
-#endif /* MEMORY_ALLOC_H_ */
+#endif /* ___MEMORY_ALLOC_H_ */

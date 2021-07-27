@@ -8,17 +8,10 @@
  *
  * Dynamic array.
  */
-
-#ifndef STM32IPL
-#include <mp.h>
-#include <stackctrl.h>
-#else
-#include "xalloc.h"
-#include <stdio.h>
 #include <string.h>
-#define MP_STACK_CHECK()
-#endif
-
+// STM32IPL #include "py/runtime.h"
+// STM32IPL #include "py/stackctrl.h"
+#include "xalloc.h"
 #include "array.h"
 #define ARRAY_INIT_SIZE (4) // Size of one GC block.
 
@@ -134,7 +127,7 @@ void array_resize(array_t *array, int num)
 // see micropython quicksort (objlist.c -> mp_quicksort)
 static void quicksort(void **head, void **tail, array_comp_t comp)
 {
-    MP_STACK_CHECK();
+// STM32IPL    MP_STACK_CHECK();
     while (head < tail) {
         void **h = head - 1;
         void **t = tail;

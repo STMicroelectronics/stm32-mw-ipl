@@ -6,17 +6,12 @@
  * FFT LIB - can do 1024 point real FFTs and 512 point complex FFTs
  *
  */
+#define mp_raise_msg(a,b) {}		// STM32IPL
+// STM32IPL #include "py/runtime.h"
+// STM32IPL #include "py/obj.h"
 #include <arm_math.h>
 #include "fb_alloc.h"
-#ifndef STM32IPL
-#include "ff_wrapper.h"
-#else
-#include "imlib.h"
-static void ff_no_intersection(void *p)
-{
-    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "No intersection!"));
-}
-#endif
+// STM32IPL #include "ff_wrapper.h"
 #include "common.h"
 #include "fft.h"
 // http://processors.wiki.ti.com/index.php/Efficient_FFT_Computation_of_Real_Input
@@ -88,39 +83,39 @@ const static float fft_cos_table[512] = {
     -0.998795f, -0.999078f, -0.999322f, -0.999529f, -0.999699f, -0.999831f, -0.999925f, -0.999981f
 };
 
-ALWAYS_INLINE static float get_cos(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_cos(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return fft_cos_table[k << (9 - N_pow2)];
 }
 
-ALWAYS_INLINE static float get_ai(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_ai(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (-get_cos(k, N_pow2));
 }
 
-ALWAYS_INLINE static float get_bi(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_bi(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (+get_cos(k, N_pow2));
 }
 
-ALWAYS_INLINE static float get_a_star_i(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_a_star_i(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (+get_cos(k, N_pow2));
 }
 
-ALWAYS_INLINE static float get_b_star_i(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_b_star_i(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (-get_cos(k, N_pow2));
 }
 
 //// For samples 0 to (n/2)-1 --- Note: clog2(n/2) = N_pow2
-//ALWAYS_INLINE static float get_hann_l_side(int k, int N_pow2)
+//OMV_ATTR_ALWAYS_INLINE static float get_hann_l_side(int k, int N_pow2)
 //{
 //    return 0.5 * (1 - get_cos(k, N_pow2));
 //}
 
 //// For samples (n/2) to n-1 --- Note: clog2(n/2) = N_pow2
-//ALWAYS_INLINE static float get_hann_r_side(int k, int N_pow2)
+//OMV_ATTR_ALWAYS_INLINE static float get_hann_r_side(int k, int N_pow2)
 //{
 //    return 0.5 * (1 - get_cos((2 << N_pow2) - k - 1, N_pow2));
 //}
@@ -192,27 +187,27 @@ const static float fft_sin_table[512] = {
      0.049068f,  0.042938f,  0.036807f,  0.030675f,  0.024541f,  0.018407f,  0.012272f,  0.006136f
 };
 
-ALWAYS_INLINE static float get_sin(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_sin(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return fft_sin_table[k << (9 - N_pow2)];
 }
 
-ALWAYS_INLINE static float get_ar(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_ar(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (1 - get_sin(k, N_pow2));
 }
 
-ALWAYS_INLINE static float get_br(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_br(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (1 + get_sin(k, N_pow2));
 }
 
-ALWAYS_INLINE static float get_a_star_r(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_a_star_r(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (1 - get_sin(k, N_pow2));
 }
 
-ALWAYS_INLINE static float get_b_star_r(int k, int N_pow2) // N=512 -> N=pow2=9
+OMV_ATTR_ALWAYS_INLINE static float get_b_star_r(int k, int N_pow2) // N=512 -> N=pow2=9
 {
     return 0.5 * (1 + get_sin(k, N_pow2));
 }
@@ -289,12 +284,12 @@ static void pack_fft(float *in, float *out, int N_pow2)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-ALWAYS_INLINE static int int_flog2(int x) // floor log 2
+OMV_ATTR_ALWAYS_INLINE static int int_flog2(int x) // floor log 2
 {
     return 31 - __CLZ(x);
 }
 
-ALWAYS_INLINE static int int_clog2(int x) // ceiling log 2
+OMV_ATTR_ALWAYS_INLINE static int int_clog2(int x) // ceiling log 2
 {
     int y = int_flog2(x);
     return (x - (1 << y)) ? (y + 1) : y;
@@ -304,19 +299,19 @@ ALWAYS_INLINE static int int_clog2(int x) // ceiling log 2
 
 // Input even numbered index
 // Output even numbered index
-ALWAYS_INLINE static int bit_reverse(int index, int N_pow2)
+OMV_ATTR_ALWAYS_INLINE static int bit_reverse(int index, int N_pow2)
 {
     return __RBIT(index) >> (30 - N_pow2);
 }
 
-ALWAYS_INLINE static void swap(float *a, float *b)
+OMV_ATTR_ALWAYS_INLINE static void swap(float *a, float *b)
 {
     float tmp = *b;
     *b = *a;
     *a = tmp;
 }
 
-//ALWAYS_INLINE static float get_hann(int k, int N_pow2)
+//OMV_ATTR_ALWAYS_INLINE static float get_hann(int k, int N_pow2)
 //{
 //    if (k < (1 << N_pow2)) {
 //        return get_hann_l_side(k, N_pow2);
@@ -453,7 +448,7 @@ void fft1d_alloc(fft1d_controller_t *controller, uint8_t *buf, int len)
     controller->data = fb_alloc((2 << controller->pow2) * sizeof(float), FB_ALLOC_NO_HINT);
 }
 
-void fft1d_dealloc(void)
+void fft1d_dealloc()
 {
     fb_free();
 }
@@ -556,7 +551,9 @@ void fft1d_run_again(fft1d_controller_t *controller)
 void fft2d_alloc(fft2d_controller_t *controller, image_t *img, rectangle_t *r)
 {
     controller->img = img;
-    if (!rectangle_subimg(controller->img, r, &controller->r)) ff_no_intersection(NULL);
+    if (!rectangle_subimg(controller->img, r, &controller->r)) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("No intersection!"));
+    }
 
     controller->w_pow2 = int_clog2(controller->r.w);
     controller->h_pow2 = int_clog2(controller->r.h);
@@ -565,7 +562,7 @@ void fft2d_alloc(fft2d_controller_t *controller, image_t *img, rectangle_t *r)
     fb_alloc0(2 * (1 << controller->w_pow2) * (1 << controller->h_pow2) * sizeof(float), FB_ALLOC_NO_HINT);
 }
 
-void fft2d_dealloc(void)
+void fft2d_dealloc()
 {
     fb_free();
 }

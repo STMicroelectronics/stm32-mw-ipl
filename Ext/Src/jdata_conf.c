@@ -52,9 +52,6 @@
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
-#include "perf.h"
-extern perfTimes_t perf;
-
 /*
  * The modules that use fread() and fwrite() always invoke them through
  * these macros.  On some systems you may need to twiddle the argument casts.
@@ -70,15 +67,8 @@ size_t read_file(JFILE *file, uint8_t *buf, uint32_t sizeofbuf)
 size_t write_file(JFILE *file, uint8_t *buf, uint32_t sizeofbuf)
 {
   static size_t BytesWritefile;
-#ifdef STM32IPL_PERF
-  uint32_t tickStart = HAL_GetTick();
-#endif /* STM32IPL_PERF */
+
   f_write(file, buf , sizeofbuf, &BytesWritefile);
-#ifdef STM32IPL_PERF
-  perf.encFileIO += HAL_GetTick() - tickStart;
-  perf.bytesWritten += BytesWritefile;
-  perf.writeCount++;
-#endif /* STM32IPL_PERF */
   
   return BytesWritefile; 
 }

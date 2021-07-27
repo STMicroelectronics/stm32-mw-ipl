@@ -8,11 +8,7 @@
  *
  * Statistics functions.
  */
-
 #include "imlib.h"
-
-/* STM32IPL added line.*/
-extern float ALWAYS_INLINE fast_sqrtf(float x);
 
 #ifdef IMLIB_ENABLE_GET_SIMILARITY
 typedef struct imlib_similatiry_line_op_state {
@@ -133,7 +129,7 @@ void imlib_get_similarity(image_t *img, const char *path, image_t *other, int sc
     state.similarity_sum = 0.0f;
     state.similarity_sum_2 = 0.0f;
     state.similarity_min = FLT_MAX;
-    state.similarity_max = FLT_MIN;
+    state.similarity_max = -FLT_MAX;
     state.lines_processed = 0;
 
     imlib_image_operation(img, path, other, scalar, imlib_similarity_line_op, &state);
@@ -484,8 +480,7 @@ static int ostu(int bincount, float *bins)
 {
     float cdf[bincount]; memset(cdf, 0, bincount * sizeof(float));
     float weighted_cdf[bincount]; memset(weighted_cdf, 0, bincount * sizeof(float));
-    float variance[bincount]; memset(variance, 0, bincount * sizeof(float));
-    
+
     cdf[0] = bins[0];
     weighted_cdf[0] = 0 * bins[0];
 
@@ -493,7 +488,8 @@ static int ostu(int bincount, float *bins)
         cdf[i] = cdf[i - 1] + bins[i];
         weighted_cdf[i] = weighted_cdf[i - 1] + (i * bins[i]);
     }
-    
+
+    float variance[bincount]; memset(variance, 0, bincount * sizeof(float));
     float max_variance = 0.0f;
     int threshold = 0;
 
@@ -510,7 +506,7 @@ static int ostu(int bincount, float *bins)
             threshold = i;
         }
     }
-    
+
     return threshold;
 }
 

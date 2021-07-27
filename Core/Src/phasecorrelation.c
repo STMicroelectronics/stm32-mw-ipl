@@ -11,6 +11,16 @@
 #include "imlib.h"
 #include "fft.h"
 
+// STM32IPL: introduced macro to solve problems with Keil.
+#if defined ( __ARMCC_VERSION )
+#define ISNANF isnan
+#define ISINFF isinf
+#else
+#define ISNANF isnanf
+#define ISINFF isinff
+#endif
+
+				
 void imlib_logpolar_int(image_t *dst, image_t *src, rectangle_t *roi, bool linear, bool reverse)
 {
     int w = roi->w; // == dst_w
@@ -353,12 +363,12 @@ void imlib_phasecorrelate(image_t *img0, image_t *img1, rectangle_t *roi0, recta
         || ((w/2.0f) <= f_off_x)
         || (f_off_y < (-h/2.0f))
         || ((h/2.0f) <= f_off_y)
-        || isnanf(f_off_x)
-        || isinff(f_off_x)
-        || isnanf(f_off_y)
-        || isinff(f_off_y)
-        || isnanf(tmp_response)
-        || isinff(tmp_response)) { // Noise Filter
+        || ISNANF(f_off_x)
+        || ISINFF(f_off_x)
+        || ISNANF(f_off_y)
+        || ISINFF(f_off_y)
+        || ISNANF(tmp_response)
+        || ISINFF(tmp_response)) { // Noise Filter
             f_off_x = 0;
             f_off_y = 0;
             tmp_response = 0;
@@ -554,12 +564,12 @@ void imlib_phasecorrelate(image_t *img0, image_t *img1, rectangle_t *roi0, recta
         || ((w/2.0f) <= *x_translation)
         || (*y_translation < (-h/2.0f))
         || ((h/2.0f) <= *y_translation)
-        || isnanf(*x_translation)
-        || isinff(*x_translation)
-        || isnanf(*y_translation)
-        || isinff(*y_translation)
-        || isnanf(*response)
-        || isinff(*response)) { // Noise Filter
+        || ISNANF(*x_translation)
+        || ISINFF(*x_translation)
+        || ISNANF(*y_translation)
+        || ISINFF(*y_translation)
+        || ISNANF(*response)
+        || ISINFF(*response)) { // Noise Filter
             *x_translation = 0;
             *y_translation = 0;
             *response = 0;

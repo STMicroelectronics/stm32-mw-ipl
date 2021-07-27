@@ -9,27 +9,24 @@
  * Image library.
  */
 #include <stdlib.h>
+// STM32IPL #include "py/obj.h"
+// STM32IPL #include "py/runtime.h"
+
+// STM32IPL #include "font.h"
 #include "array.h"
+// STM32IPL #include "ff_wrapper.h"
 #include "imlib.h"
 #include "common.h"
-
-
-#ifndef STM32IPL
-#include "ff_wrapper.h"
-#include <mp.h>
 #include "omv_boardconfig.h"
-#include "font.h"
-#endif /* STM32IPL */
 
-////////////////////
-// Error handler  //
-////////////////////
-#ifdef STM32IPL
-__attribute__((weak)) void STM32Ipl_FaultHandler( const char *error )
-{
-	while(1);
-}
-#endif /* STM32IPL */
+// FIXME : da togliere
+// Moved to memory_alloc.c
+//#ifdef STM32IPL
+//__attribute__((weak)) void STM32Ipl_FaultHandler(const char *error)
+//{
+//	while(1);
+//}
+//#endif // STM32IPL
 
 /////////////////
 // Point Stuff //
@@ -75,7 +72,7 @@ void point_min_area_rectangle(point_t *corners, point_t *new_corners, int corner
     int i_x2 = 0, i_y2 = 0;
     int i_x3 = 0, i_y3 = 0;
     float i_r = 0;
-    
+
     // This algorithm aligns the 4 edges produced by the 4 corners to the x axis and then computes the
     // min area rect for each alignment. The smallest rect is choosen and then re-rotated and returned.
     for (int i = 0; i < corners_len; i++) {
@@ -83,10 +80,9 @@ void point_min_area_rectangle(point_t *corners, point_t *new_corners, int corner
         int x_diff = corners[(i+1)%corners_len].x - corners[i].x;
         int y_diff = corners[(i+1)%corners_len].y - corners[i].y;
         float r = -fast_atan2f(y_diff, x_diff);
-        
+
         int16_t x1[corners_len-1];
         int16_t y1[corners_len-1];
-
         for (int j = 0, jj = corners_len - 1; j < jj; j++) {
             point_rotate(corners[(i+j+1)%corners_len].x, corners[(i+j+1)%corners_len].y, r, x0, y0, x1 + j, y1 + j);
         }
@@ -96,10 +92,10 @@ void point_min_area_rectangle(point_t *corners, point_t *new_corners, int corner
         int miny = y0;
         int maxy = y0;
         for (int j = 0, jj = corners_len - 1; j < jj; j++) {
-            minx = MIN(minx, x1[j]);
-            maxx = MAX(maxx, x1[j]);
-            miny = MIN(miny, y1[j]);
-            maxy = MAX(maxy, y1[j]);
+            minx = IM_MIN(minx, x1[j]);
+            maxx = IM_MAX(maxx, x1[j]);
+            miny = IM_MIN(miny, y1[j]);
+            maxy = IM_MAX(maxy, y1[j]);
         }
 
         int area = (maxx - minx + 1) * (maxy - miny + 1);
@@ -325,6 +321,80 @@ const int kernel_high_pass_3[3*3] = {
     -1, -1, -1
 };
 
+// This function fills a grayscale image from an array of floating point numbers that are scaled
+// between min and max. The image w*h must equal the floating point array w*h.
+void imlib_fill_image_from_float(image_t *img, int w, int h, float *data, float min, float max,
+                                 bool mirror, bool flip, bool dst_transpose, bool src_transpose)
+{
+    float tmp = min;
+    min = (min < max) ? min : max;
+    max = (max > tmp) ? max : tmp;
+
+    float diff = 255.f / (max - min);
+    int w_1 = w - 1;
+    int h_1 = h - 1;
+
+    if (!src_transpose) {
+        for (int y = 0; y < h; y++) {
+            int y_dst = flip ? (h_1 - y) : y;
+            float *raw_row = data + (y * w);
+            uint8_t *row_pointer = ((uint8_t *) img->data) + (y_dst * w);
+            uint8_t *t_row_pointer = ((uint8_t *) img->data) + y_dst;
+
+            for (int x = 0; x < w; x++) {
+                int x_dst = mirror ? (w_1 - x) : x;
+                float raw = raw_row[x];
+
+                if (raw < min) {
+                    raw = min;
+                }
+
+                if (raw > max) {
+                    raw = max;
+                }
+
+                int pixel = fast_roundf((raw - min) * diff);
+                pixel = __USAT(pixel, 8);
+
+                if (!dst_transpose) {
+                    row_pointer[x_dst] = pixel;
+                } else {
+                    t_row_pointer[x_dst * h] = pixel;
+                }
+            }
+        }
+    } else {
+        for (int x = 0; x < w; x++) {
+            int x_dst = mirror ? (w_1 - x) : x;
+            float *raw_row = data + (x * h);
+            uint8_t *t_row_pointer = ((uint8_t *) img->data) + (x_dst * h);
+            uint8_t *row_pointer = ((uint8_t *) img->data) + x_dst;
+
+            for (int y = 0; y < h; y++) {
+                int y_dst = flip ? (h_1 - y) : y;
+                float raw = raw_row[y];
+
+                if (raw < min) {
+                    raw = min;
+                }
+
+                if (raw > max) {
+                    raw = max;
+                }
+
+                int pixel = fast_roundf((raw - min) * diff);
+                pixel = __USAT(pixel, 8);
+
+                if (!dst_transpose) {
+                    row_pointer[y_dst * w] = pixel;
+                } else {
+                    t_row_pointer[y_dst] = pixel;
+                }
+            }
+        }
+    }
+}
+
 int8_t imlib_rgb565_to_l(uint16_t pixel)
 {
     float r_lin = xyz_table[COLOR_RGB565_TO_R8(pixel)];
@@ -366,36 +436,6 @@ int8_t imlib_rgb565_to_b(uint16_t pixel)
     z = (z>0.008856f) ? fast_cbrtf(z) : ((z * 7.787037f) + 0.137931f);
 
     return fast_floorf(200 * (y-z));
-}
-
-int8_t imlib_rgb565_to_y(uint16_t pixel)
-{
-    int r = COLOR_RGB565_TO_R8(pixel);
-    int g = COLOR_RGB565_TO_G8(pixel);
-    int b = COLOR_RGB565_TO_B8(pixel);
-
-    return (int8_t)(((r * 9770) + (g * 19182) + (b * 3736)) >> 15) - 128; // .299*r + .587*g + .114*b
-//    return fast_floorf((r * +0.299000f) + (g * +0.587000f) + (b * +0.114000f)) - 128;
-}
-
-int8_t imlib_rgb565_to_u(uint16_t pixel)
-{
-    int r = COLOR_RGB565_TO_R8(pixel);
-    int g = COLOR_RGB565_TO_G8(pixel);
-    int b = COLOR_RGB565_TO_B8(pixel);
-
-    return (int8_t)(((b << 14) - (r * 5529) - (g * 10855)) >> 15); // -0.168736*r + -0.331264*g + 0.5*b
-//    return fast_floorf((r * -0.168736f) + (g * -0.331264f) + (b * +0.500000f));
-}
-
-int8_t imlib_rgb565_to_v(uint16_t pixel)
-{
-    int r = COLOR_RGB565_TO_R8(pixel);
-    int g = COLOR_RGB565_TO_G8(pixel);
-    int b = COLOR_RGB565_TO_B8(pixel);
-
-    return (int8_t)(((r << 14) - (g * 13682) - (b * 2664)) >> 15); // 0.5*r + -0.418688*g + -0.081312*b
-//    return fast_floorf((r * +0.500000f) + (g * -0.418688f) + (b * -0.081312f));
 }
 
 // https://en.wikipedia.org/wiki/Lab_color_space -> CIELAB-CIEXYZ conversions
@@ -886,10 +926,115 @@ void imlib_bayer_to_binary(image_t *img, int x_offset, int y_offset, int width, 
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
+static save_image_format_t imblib_parse_extension(image_t *img, const char *path)
+{
+    size_t l = strlen(path);
+    const char *p = path + l;
+    if (l >= 5) {
+               if (((p[-1] == 'g') || (p[-1] == 'G'))
+               &&  ((p[-2] == 'e') || (p[-2] == 'E'))
+               &&  ((p[-3] == 'p') || (p[-3] == 'P'))
+               &&  ((p[-4] == 'j') || (p[-4] == 'J'))
+               &&  ((p[-5] == '.') || (p[-5] == '.'))) {
+                    // Will convert to JPG if not.
+                    return FORMAT_JPG;
+        }
+    }
+    if (l >= 4) {
+               if (((p[-1] == 'g') || (p[-1] == 'G'))
+               &&  ((p[-2] == 'p') || (p[-2] == 'P'))
+               &&  ((p[-3] == 'j') || (p[-3] == 'J'))
+               &&  ((p[-4] == '.') || (p[-4] == '.'))) {
+                    // Will convert to JPG if not.
+                    return FORMAT_JPG;
+        } else if (((p[-1] == 'p') || (p[-1] == 'P'))
+               &&  ((p[-2] == 'm') || (p[-2] == 'M'))
+               &&  ((p[-3] == 'b') || (p[-3] == 'B'))
+               &&  ((p[-4] == '.') || (p[-4] == '.'))) {
+                    if (IM_IS_JPEG(img) || IM_IS_BAYER(img)) {
+                    	// STM32IPL mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Image is not BMP!"));
+                    }
+                    return FORMAT_BMP;
+        } else if (((p[-1] == 'm') || (p[-1] == 'M'))
+               &&  ((p[-2] == 'p') || (p[-2] == 'P'))
+               &&  ((p[-3] == 'p') || (p[-3] == 'P'))
+               &&  ((p[-4] == '.') || (p[-4] == '.'))) {
+                    if (!IM_IS_RGB565(img)) {
+                    	// STM32IPL mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Image is not PPM!"));
+                    }
+                    return FORMAT_PNM;
+        } else if (((p[-1] == 'm') || (p[-1] == 'M'))
+               &&  ((p[-2] == 'g') || (p[-2] == 'G'))
+               &&  ((p[-3] == 'p') || (p[-3] == 'P'))
+               &&  ((p[-4] == '.') || (p[-4] == '.'))) {
+                    if (!IM_IS_GS(img)) {
+                    	// STM32IPL mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Image is not PGM!"));
+                    }
+                    return FORMAT_PNM;
+        } else if (((p[-1] == 'w') || (p[-1] == 'W'))
+               &&  ((p[-2] == 'a') || (p[-2] == 'A'))
+               &&  ((p[-3] == 'r') || (p[-3] == 'R'))
+               &&  ((p[-4] == '.') || (p[-4] == '.'))) {
+                    if (!IM_IS_BAYER(img)) {
+                    	// STM32IPL mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Image is not BAYER!"));
+                    }
+                    return FORMAT_RAW;
+        }
+
+    }
+    return FORMAT_DONT_CARE;
+}
+
+bool imlib_read_geometry(FIL *fp, image_t *img, const char *path, img_read_settings_t *rs)
+{
+    file_read_open(fp, path);
+    char magic[2];
+    read_data(fp, &magic, 2);
+    file_close(fp);
+
+    bool vflipped = false;
+    if ((magic[0]=='P')
+    && ((magic[1]=='2') || (magic[1]=='3')
+    ||  (magic[1]=='5') || (magic[1]=='6'))) { // PPM
+        rs->format = FORMAT_PNM;
+        file_read_open(fp, path);
+        file_buffer_on(fp); // REMEMBER TO TURN THIS OFF LATER!
+        ppm_read_geometry(fp, img, path, &rs->ppm_rs);
+    } else if ((magic[0]=='B') && (magic[1]=='M')) { // BMP
+        rs->format = FORMAT_BMP;
+        file_read_open(fp, path);
+        file_buffer_on(fp); // REMEMBER TO TURN THIS OFF LATER!
+        vflipped = bmp_read_geometry(fp, img, path, &rs->bmp_rs);
+    } else {
+        rs->format = FORMAT_JPG;
+        file_read_open(fp, path);
+        // STM32IPL jpeg_read_geometry(fp, img, path, &rs->jpg_rs);
+        // STM32IPL must add the jpeg handling.
+    }
+    imblib_parse_extension(img, path); // Enforce extension!
+    return vflipped;
+}
+
+static void imlib_read_pixels(FIL *fp, image_t *img, int n_lines, img_read_settings_t *rs)
+{
+    switch (rs->format) {
+        case FORMAT_BMP:
+            bmp_read_pixels(fp, img, n_lines, &rs->bmp_rs);
+            break;
+        case FORMAT_PNM:
+            ppm_read_pixels(fp, img, n_lines, &rs->ppm_rs);
+            break;
+        default: // won't happen
+            break;
+    }
+}
+#endif  //IMLIB_ENABLE_IMAGE_FILE_IO
+
 void imlib_image_operation(image_t *img, const char *path, image_t *other, int scalar, line_op_t op, void *data)
 {
     if (path) {
-#ifndef STM32IPL
+        #if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
         uint32_t size = fb_avail() / 2;
         void *alloc = fb_alloc(size, FB_ALLOC_NO_HINT); // We have to do this before the read.
         // This code reads a window of an image in at a time and then executes
@@ -901,7 +1046,8 @@ void imlib_image_operation(image_t *img, const char *path, image_t *other, int s
         img_read_settings_t rs;
         bool vflipped = imlib_read_geometry(&fp, &temp, path, &rs);
         if (!IM_EQUAL(img, &temp)) {
-            ff_not_equal(&fp);
+            f_close(&fp);
+            // STM32IPL mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Images not equal!"));
         }
         // When processing vertically flipped images the read function will fill
         // the window up from the bottom. The read function assumes that the
@@ -912,8 +1058,7 @@ void imlib_image_operation(image_t *img, const char *path, image_t *other, int s
         temp.h = IM_MIN(img->h, (size / (temp.w * temp.bpp)));
         // This should never happen unless someone forgot to free.
         if ((!temp.pixels) || (!temp.h)) {
-            nlr_raise(mp_obj_new_exception_msg(&mp_type_MemoryError,
-                                               "Not enough memory available!"));
+        	// STM32IPL mp_raise_msg(&mp_type_MemoryError, MP_ERROR_TEXT("Not enough memory available!"));
         }
         for (int i=0; i<img->h; i+=temp.h) { // goes past end
             int lines = IM_MIN(temp.h, img->h-i);
@@ -929,14 +1074,14 @@ void imlib_image_operation(image_t *img, const char *path, image_t *other, int s
         file_buffer_off(&fp);
         file_close(&fp);
         fb_free();
-#endif
-    } else if (other) {
+// STM32IPL        #else
+// STM32IPL        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Image I/O is not supported"));
+        #endif
+    } else
+
+		if (other) {
         if (!IM_EQUAL(img, other)) {
-#ifndef STM32IPL
-        	ff_not_equal(NULL);
-#else /* STM32IPL */
-        	STM32Ipl_FaultHandler("Images not equal");
-#endif /* STM32IPL */
+        	// STM32IPL mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Images not equal!"));
         }
         switch (img->bpp) {
             case IMAGE_BPP_BINARY: {
@@ -1011,6 +1156,71 @@ void imlib_image_operation(image_t *img, const char *path, image_t *other, int s
         }
     }
 }
+
+#if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
+void imlib_load_image(image_t *img, const char *path)
+{
+    FIL fp;
+    file_read_open(&fp, path);
+    char magic[2];
+    read_data(&fp, &magic, 2);
+    file_close(&fp);
+
+    if ((magic[0]=='P')
+    && ((magic[1]=='2') || (magic[1]=='3')
+    ||  (magic[1]=='5') || (magic[1]=='6'))) { // PPM
+        ppm_read(img, path);
+    } else if ((magic[0]=='B') && (magic[1]=='M')) { // BMP
+        bmp_read(img, path);
+    } else if ((magic[0]==0xFF) && (magic[1]==0xD8)) { // JPEG
+        jpeg_read(img, path);
+    } else {
+        ff_unsupported_format(NULL);
+    }
+    imblib_parse_extension(img, path); // Enforce extension!
+}
+
+void imlib_save_image(image_t *img, const char *path, rectangle_t *roi, int quality)
+{
+    switch (imblib_parse_extension(img, path)) {
+        case FORMAT_BMP:
+            bmp_write_subimg(img, path, roi);
+            break;
+        case FORMAT_PNM:
+            ppm_write_subimg(img, path, roi);
+            break;
+        case FORMAT_RAW: {
+            FIL fp;
+            file_write_open(&fp, path);
+            write_data(&fp, img->pixels, img->w * img->h);
+            file_close(&fp);
+            break;
+        }
+        case FORMAT_JPG:
+            jpeg_write(img, path, quality);
+            break;
+        case FORMAT_DONT_CARE:
+            // Path doesn't have an extension.
+            if (IM_IS_JPEG(img)) {
+                char *new_path = strcat(strcpy(fb_alloc(strlen(path)+5, FB_ALLOC_NO_HINT), path), ".jpg");
+                jpeg_write(img, new_path, quality);
+                fb_free();
+            } else if (IM_IS_BAYER(img)) {
+                FIL fp;
+                char *new_path = strcat(strcpy(fb_alloc(strlen(path)+5, FB_ALLOC_NO_HINT), path), ".raw");
+                file_write_open(&fp, new_path);
+                write_data(&fp, img->pixels, img->w * img->h);
+                file_close(&fp);
+                fb_free();
+            } else { // RGB or GS, save as BMP.
+                char *new_path = strcat(strcpy(fb_alloc(strlen(path)+5, FB_ALLOC_NO_HINT), path), ".bmp");
+                bmp_write_subimg(img, new_path, roi);
+                fb_free();
+            }
+            break;
+    }
+}
+#endif //IMLIB_ENABLE_IMAGE_FILE_IO
 
 ////////////////////////////////////////////////////////////////////////////////
 

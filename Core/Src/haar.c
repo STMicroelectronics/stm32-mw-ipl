@@ -10,13 +10,14 @@
  * Based on the work of Francesco Comaschi (f.comaschi@tue.nl)
  */
 #include <stdio.h>
-#include <arm_math.h>
+// STM32IPL #include "py/obj.h"
+// STM32IPL #include "py/nlr.h"
 #ifndef STM32IPL
 #include "ff.h"
 #include "ff_wrapper.h"
-#else /* STM32IPL */
+#else // STM32IPL
 #define FR_OK 0
-#endif /* STM32IPL */
+#endif // STM32IPL
 #include "xalloc.h"
 #include "imlib.h"
 // built-in cascades
@@ -167,7 +168,7 @@ array_t *imlib_detect_objects(image_t *image, cascade_t *cascade, rectangle_t *r
     return objects;
 }
 
-#ifndef STM32IPL
+#if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
 int imlib_load_cascade_from_file(cascade_t *cascade, const char *path)
 {
     int i;
@@ -253,7 +254,7 @@ error:
     file_close(&fp);
     return res;
 }
-#endif /* STM32IPL */
+#endif //(IMLIB_ENABLE_IMAGE_FILE_IO)
 
 int imlib_load_cascade(cascade_t *cascade, const char *path)
 {
@@ -283,12 +284,12 @@ int imlib_load_cascade(cascade_t *cascade, const char *path)
         cascade->weights_array       = (int8_t  *)eye_weights_array;
         cascade->rectangles_array    = (int8_t  *)eye_rectangles_array;
     } else {
-#ifndef STM32IPL
+        #if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
         // xml cascade
         return imlib_load_cascade_from_file(cascade, path);
-#else /* STM32IPL */
-        return 1;
-#endif /* STM32IPL */
+        #else
+        return -1;
+        #endif
     }
 
     int i;
