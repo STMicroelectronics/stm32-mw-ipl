@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This file is part of the OpenMV project.
  *
  * Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
