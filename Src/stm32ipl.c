@@ -586,63 +586,23 @@ stm32ipl_err_t STM32Ipl_Resize(const image_t *src, image_t *dst, const rectangle
 }
 
 /**
- * brief Checks if a downscale operation must be performed in reversed mode (starting from the last pixel of the image).
- * A reversed resize is allowed for scale-down cases only.
- * param src 	Source image.
- * param dst 	Destination image; its width and height must be greater than zero.
- * return		0 if the resize operation must be performed normally (from the start to the end of the image);
- * 1 if the resize operation must be performed as reversed (from the end to the start of the image);
- * -1 if a reversed resize is not allowed.
- */
-static int32_t STM32Ipl_CheckDownscale(const image_t *src, const image_t *dst)
-{
-	uint32_t srcSize;
-	uint32_t dstSize;
-	uint32_t srcStart;
-	uint32_t dstStart;
-	uint32_t srcEnd;
-	uint32_t dstEnd;
-
-	if (!src || !dst)
-		return -1;
-
-	srcSize = STM32Ipl_ImageDataSize(src);
-	dstSize = STM32Ipl_ImageDataSize(dst);
-	srcStart = (uint32_t)src->data;
-	dstStart = (uint32_t)dst->data;
-	srcEnd = srcStart + srcSize - 1;
-	dstEnd = dstStart + dstSize - 1;
-
-	if (srcSize < dstSize)
-		return -1;
-	else
-		if ((srcStart >= dstStart) || (srcEnd <= dstStart))
-			return 0;
-		else
-			if ((srcEnd > dstStart) && (dstEnd >= srcEnd))
-				return 1;
-
-	return -1;
-}
-
-/**
  * @brief Resizes (downscale only) the source image to the destination image with Nearest Neighbor method.
  * The two images must have the same format. The destination image data buffer must be already allocated
  * by the user and its size must be large enough to contain the resized pixels.
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
- * This function supports some particular cases when source and destination data memory buffers overlap.
  * Use this function for downscale cases only.
  * @param src 	Source image.
  * @param dst 	Destination image; its width and height must be greater than zero.
+ * @param reversed false to resize in incremeting order, from start to the end of the image.
+ *                 true to resize in decrementing order, from end to start of the image.
  * @return		stm32ipl_err_Ok on success, error otherwise
  */
-stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst)
+stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst, bool reversed)
 {
 	int32_t dstW;
 	int32_t dstH;
 	float wRatio;
 	float hRatio;
-	int32_t reversed;
 
 	STM32IPL_CHECK_VALID_IMAGE(src)
 	STM32IPL_CHECK_VALID_IMAGE(dst)
@@ -658,12 +618,7 @@ stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst)
 	wRatio = (float)src->w / dstW;
 	hRatio = (float)src->h / dstH;
 
-	reversed = STM32Ipl_CheckDownscale(src, dst);
-
-	if (reversed == -1)
-		return stm32ipl_err_NotAllowed;
-
-	if (reversed == 1) {
+	if (reversed) {
 		switch (src->bpp) {
 			case IMAGE_BPP_BINARY:
 				for (int32_t y = dstH - 1; y >= 0; y--) {
@@ -713,58 +668,57 @@ stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst)
 			default:
 				return stm32ipl_err_UnsupportedFormat;
 		}
-	} else
-		if (reversed == 0) {
-			switch (src->bpp) {
-				case IMAGE_BPP_BINARY:
-					for (int32_t y = 0; y < dstH; y++) {
-						uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
-						uint32_t *dstRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(dst, y);
+	} else {
+		switch (src->bpp) {
+			case IMAGE_BPP_BINARY:
+				for (int32_t y = 0; y < dstH; y++) {
+					uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint32_t *dstRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(dst, y);
 
-						for (int32_t x = 0; x < dstW; x++)
-							IMAGE_PUT_BINARY_PIXEL_FAST(dstRow, x,
-									IMAGE_GET_BINARY_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
-					}
-					break;
+					for (int32_t x = 0; x < dstW; x++)
+						IMAGE_PUT_BINARY_PIXEL_FAST(dstRow, x,
+								IMAGE_GET_BINARY_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+				}
+				break;
 
-				case IMAGE_BPP_GRAYSCALE:
-					for (int32_t y = 0; y < dstH; y++) {
-						uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
-						uint8_t *dstRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(dst, y);
+			case IMAGE_BPP_GRAYSCALE:
+				for (int32_t y = 0; y < dstH; y++) {
+					uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint8_t *dstRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(dst, y);
 
-						for (int32_t x = 0; x < dstW; x++)
-							IMAGE_PUT_GRAYSCALE_PIXEL_FAST(dstRow, x,
-									IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
-					}
-					break;
+					for (int32_t x = 0; x < dstW; x++)
+						IMAGE_PUT_GRAYSCALE_PIXEL_FAST(dstRow, x,
+								IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+				}
+				break;
 
-				case IMAGE_BPP_RGB565:
-					for (int32_t y = 0; y < dstH; y++) {
-						uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
-						uint16_t *dstRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(dst, y);
+			case IMAGE_BPP_RGB565:
+				for (int32_t y = 0; y < dstH; y++) {
+					uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint16_t *dstRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(dst, y);
 
-						for (int32_t x = 0; x < dstW; x++)
-							IMAGE_PUT_RGB565_PIXEL_FAST(dstRow, x,
-									IMAGE_GET_RGB565_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
-					}
+					for (int32_t x = 0; x < dstW; x++)
+						IMAGE_PUT_RGB565_PIXEL_FAST(dstRow, x,
+								IMAGE_GET_RGB565_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+				}
 
-					break;
+				break;
 
-				case IMAGE_BPP_RGB888:
-					for (int32_t y = 0; y < dstH; y++) {
-						rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
-						rgb888_t *dstRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(dst, y);
+			case IMAGE_BPP_RGB888:
+				for (int32_t y = 0; y < dstH; y++) {
+					rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					rgb888_t *dstRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(dst, y);
 
-						for (int32_t x = 0; x < dstW; x++)
-							IMAGE_PUT_RGB888_PIXEL_FAST(dstRow, x,
-									IMAGE_GET_RGB888_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
-					}
-					break;
+					for (int32_t x = 0; x < dstW; x++)
+						IMAGE_PUT_RGB888_PIXEL_FAST(dstRow, x,
+								IMAGE_GET_RGB888_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+				}
+				break;
 
-				default:
-					return stm32ipl_err_UnsupportedFormat;
-			}
+			default:
+				return stm32ipl_err_UnsupportedFormat;
 		}
+	}
 
 	return stm32ipl_err_Ok;
 }
