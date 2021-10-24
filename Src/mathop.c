@@ -13,7 +13,7 @@
 #ifdef IMLIB_ENABLE_MATH_OPS
 void imlib_gamma_corr(image_t *img, float gamma, float contrast, float brightness)
 {
-    gamma = IM_DIV(1.0, gamma);
+    gamma = IM_DIV(1.0f, gamma);	// STM32IPL: f added to the constant.
     switch(img->bpp) {
         case IMAGE_BPP_BINARY: {
             float pScale = COLOR_BINARY_MAX - COLOR_BINARY_MIN;
@@ -923,7 +923,7 @@ static void imlib_difference_line_op(image_t *img, int line, void *other, void *
 					pixel888.r = abs(dataPixel.r - otherPixel.r);
 					pixel888.g = abs(dataPixel.g - otherPixel.g);
 					pixel888.b = abs(dataPixel.b - otherPixel.b);
-					IMAGE_PUT_RGB565_PIXEL_FAST(data, i, pixel888);
+					IMAGE_PUT_RGB888_PIXEL_FAST(data, i, pixel888);
 				}
 			}
 			break;
@@ -940,6 +940,7 @@ void imlib_difference(image_t *img, const char *path, image_t *other, int scalar
     imlib_image_operation(img, path, other, scalar,imlib_difference_line_op,  mask);
 }
 
+#ifndef STM32IPL
 typedef struct imlib_blend_line_op_state {
     float alpha;
     image_t *mask;
@@ -1002,4 +1003,5 @@ void imlib_blend(image_t *img, const char *path, image_t *other, int scalar, flo
     state.mask = mask;
     imlib_image_operation(img, path, other, scalar, imlib_blend_line_op, &state);
 }
+#endif // STM32IPL
 #endif //IMLIB_ENABLE_MATH_OPS

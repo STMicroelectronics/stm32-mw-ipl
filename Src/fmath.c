@@ -64,10 +64,8 @@ int OMV_ATTR_ALWAYS_INLINE fast_roundf(float x)
 }
 */ // STM32IPL
 
-#if defined ( __GNUC__ ) // STM32IPL
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-#endif /* __GNUC__ */ // STM32IPL
+// STM32IPL #pragma GCC diagnostic push
+// STM32IPL #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
 typedef union{
     uint32_t l;
@@ -88,9 +86,8 @@ float fast_expf(float x)
     uint32_t packed = (e.s << 31) | (e.e << 23) | e.m <<3;
     return *((float*)&packed);
 }
-#if defined ( __GNUC__ ) // STM32IPL
-#pragma GCC diagnostic pop
-#endif /* __GNUC__ */ // STM32IPL
+
+// STM32IPL  #pragma GCC diagnostic pop
 /*
  * From Hackers Delight:
  * This is a very approximate but very fast version of acbrt. It is just eight

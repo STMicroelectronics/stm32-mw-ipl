@@ -8,6 +8,8 @@
  *
  * Pupil localization using image gradients. See Fabian Timm's paper for details.
  */
+
+#ifndef STM32IPL
 #include "imlib.h"
 #ifndef STM32IPL
 #include "xalloc.h"
@@ -96,7 +98,7 @@ static void find_iris(image_t *src, array_t *gradients, int x_off, int y_off, in
                 float t = (d.x*v->x)+(d.y*v->y);
 
                 // d,g should point the same direction
-                if (t>0.0) {
+                if (t>0.0f) {	// STM32IPL: f added to the constant.
                     // dark centres are more likely to be pupils than
                     // bright centres, so we use the grayscale value as weight.
                     sum_dot += t*t*(255-src->data[y*src->w+x]);
@@ -139,3 +141,4 @@ void imlib_find_iris(image_t *src, point_t *iris, rectangle_t *roi)
 
     array_free(iris_gradients);
 }
+#endif // STM32IPL

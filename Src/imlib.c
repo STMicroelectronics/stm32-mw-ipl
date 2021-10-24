@@ -334,6 +334,7 @@ const int kernel_high_pass_3[3*3] = {
     -1, -1, -1
 };
 
+#ifndef STM32IPL
 // This function fills a grayscale image from an array of floating point numbers that are scaled
 // between min and max. The image w*h must equal the floating point array w*h.
 void imlib_fill_image_from_float(image_t *img, int w, int h, float *data, float min, float max,
@@ -407,6 +408,7 @@ void imlib_fill_image_from_float(image_t *img, int w, int h, float *data, float 
         }
     }
 }
+#endif // STM32IPL
 
 int8_t imlib_rgb565_to_l(uint16_t pixel)
 {
@@ -497,33 +499,6 @@ int8_t imlib_rgb888_to_b(rgb888_t pixel)
 	return fast_floorf(200 * (y - z));
 }
 
-// https://en.wikipedia.org/wiki/Lab_color_space -> CIELAB-CIEXYZ conversions
-// https://en.wikipedia.org/wiki/SRGB -> Specification of the transformation
-uint16_t imlib_lab_to_rgb(uint8_t l, int8_t a, int8_t b)
-{
-    float x = ((l + 16) * 0.008621f) + (a * 0.002f);
-    float y = ((l + 16) * 0.008621f);
-    float z = ((l + 16) * 0.008621f) - (b * 0.005f);
-
-    x = ((x > 0.206897f) ? (x*x*x) : ((0.128419f * x) - 0.017713f)) * 095.047f;
-    y = ((y > 0.206897f) ? (y*y*y) : ((0.128419f * y) - 0.017713f)) * 100.000f;
-    z = ((z > 0.206897f) ? (z*z*z) : ((0.128419f * z) - 0.017713f)) * 108.883f;
-
-    float r_lin = ((x * +3.2406f) + (y * -1.5372f) + (z * -0.4986f)) / 100.0f;
-    float g_lin = ((x * -0.9689f) + (y * +1.8758f) + (z * +0.0415f)) / 100.0f;
-    float b_lin = ((x * +0.0557f) + (y * -0.2040f) + (z * +1.0570f)) / 100.0f;
-
-    r_lin = (r_lin>0.0031308f) ? ((1.055f*powf(r_lin, 0.416666f))-0.055f) : (r_lin*12.92f);
-    g_lin = (g_lin>0.0031308f) ? ((1.055f*powf(g_lin, 0.416666f))-0.055f) : (g_lin*12.92f);
-    b_lin = (b_lin>0.0031308f) ? ((1.055f*powf(b_lin, 0.416666f))-0.055f) : (b_lin*12.92f);
-
-    uint32_t red   = IM_MAX(IM_MIN(fast_floorf(r_lin * COLOR_R8_MAX), COLOR_R8_MAX), COLOR_R8_MIN);
-    uint32_t green = IM_MAX(IM_MIN(fast_floorf(g_lin * COLOR_G8_MAX), COLOR_G8_MAX), COLOR_G8_MIN);
-    uint32_t blue  = IM_MAX(IM_MIN(fast_floorf(b_lin * COLOR_B8_MAX), COLOR_B8_MAX), COLOR_B8_MIN);
-
-    return COLOR_R8_G8_B8_TO_RGB565(red, green, blue);
-}
-
 // STM32IPL
 rgb888_t imlib_lab_to_rgb888(uint8_t l, int8_t a, int8_t b)
 {
@@ -551,6 +526,32 @@ rgb888_t imlib_lab_to_rgb888(uint8_t l, int8_t a, int8_t b)
 	return pixel;
 }
 
+// https://en.wikipedia.org/wiki/Lab_color_space -> CIELAB-CIEXYZ conversions
+// https://en.wikipedia.org/wiki/SRGB -> Specification of the transformation
+uint16_t imlib_lab_to_rgb(uint8_t l, int8_t a, int8_t b)
+{
+    float x = ((l + 16) * 0.008621f) + (a * 0.002f);
+    float y = ((l + 16) * 0.008621f);
+    float z = ((l + 16) * 0.008621f) - (b * 0.005f);
+
+    x = ((x > 0.206897f) ? (x*x*x) : ((0.128419f * x) - 0.017713f)) * 095.047f;
+    y = ((y > 0.206897f) ? (y*y*y) : ((0.128419f * y) - 0.017713f)) * 100.000f;
+    z = ((z > 0.206897f) ? (z*z*z) : ((0.128419f * z) - 0.017713f)) * 108.883f;
+
+    float r_lin = ((x * +3.2406f) + (y * -1.5372f) + (z * -0.4986f)) / 100.0f;
+    float g_lin = ((x * -0.9689f) + (y * +1.8758f) + (z * +0.0415f)) / 100.0f;
+    float b_lin = ((x * +0.0557f) + (y * -0.2040f) + (z * +1.0570f)) / 100.0f;
+
+    r_lin = (r_lin>0.0031308f) ? ((1.055f*powf(r_lin, 0.416666f))-0.055f) : (r_lin*12.92f);
+    g_lin = (g_lin>0.0031308f) ? ((1.055f*powf(g_lin, 0.416666f))-0.055f) : (g_lin*12.92f);
+    b_lin = (b_lin>0.0031308f) ? ((1.055f*powf(b_lin, 0.416666f))-0.055f) : (b_lin*12.92f);
+
+    uint32_t red   = IM_MAX(IM_MIN(fast_floorf(r_lin * COLOR_R8_MAX), COLOR_R8_MAX), COLOR_R8_MIN);
+    uint32_t green = IM_MAX(IM_MIN(fast_floorf(g_lin * COLOR_G8_MAX), COLOR_G8_MAX), COLOR_G8_MIN);
+    uint32_t blue  = IM_MAX(IM_MIN(fast_floorf(b_lin * COLOR_B8_MAX), COLOR_B8_MAX), COLOR_B8_MIN);
+
+    return COLOR_R8_G8_B8_TO_RGB565(red, green, blue);
+}
 
 // https://en.wikipedia.org/wiki/YCbCr -> JPEG Conversion
 uint16_t imlib_yuv_to_rgb(uint8_t y, int8_t u, int8_t v)
@@ -563,6 +564,7 @@ uint16_t imlib_yuv_to_rgb(uint8_t y, int8_t u, int8_t v)
 }
 
 // STM32IPL
+// This function is part of STM32IPL.
 rgb888_t imlib_yuv_to_rgb888(uint8_t y, int8_t u, int8_t v)
 {
 	rgb888_t pixel;
@@ -572,6 +574,7 @@ rgb888_t imlib_yuv_to_rgb888(uint8_t y, int8_t u, int8_t v)
 	return pixel;
 }
 
+#ifndef STM32IPL
 void imlib_bayer_to_rgb565(image_t *img, int w, int h, int xoffs, int yoffs, uint16_t *rgbbuf)
 {
     int r, g, b;
@@ -834,7 +837,7 @@ void imlib_bayer_to_y(image_t *img, int x_offset, int y_offset, int width, uint8
                 if (x_offset & 1) // starting on an odd pixel, capture it differently
                 {
                     g = (l1 >> 8) & 0xff; // (1, 0) green pixel
-                    r = (((l0 >> 8) & 0xff) + ((l2 >> 8) && 0xff)) >> 1;
+                    r = (((l0 >> 8) & 0xff) + ((l2 >> 8) /*&&*/ & 0xff)) >> 1;	// STM32IPL: && corrected to &.
                     b = (((l0 >> 16) & 0xff) + ((l2 >> 16) & 0xff)) >> 1;
                     *Y++ = (uint8_t)(((r * 9770) + (g * 19182) + (b * 3736)) >> 15); // .299*r + .587*g + .114*b
                     x++; // advance to next pixel
@@ -1127,6 +1130,7 @@ static void imlib_read_pixels(FIL *fp, image_t *img, int n_lines, img_read_setti
     }
 }
 #endif  //IMLIB_ENABLE_IMAGE_FILE_IO
+#endif // STM32IPL
 
 void imlib_image_operation(image_t *img, const char *path, image_t *other, int scalar, line_op_t op, void *data)
 {
@@ -1279,6 +1283,7 @@ void imlib_image_operation(image_t *img, const char *path, image_t *other, int s
     }
 }
 
+#ifndef STM32IPL
 #if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
 void imlib_load_image(image_t *img, const char *path)
 {
@@ -1343,6 +1348,7 @@ void imlib_save_image(image_t *img, const char *path, rectangle_t *roi, int qual
     }
 }
 #endif //IMLIB_ENABLE_IMAGE_FILE_IO
+#endif // STM32IPL
 
 ////////////////////////////////////////////////////////////////////////////////
 

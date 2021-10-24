@@ -63,7 +63,7 @@ static void pixel_magnitude(image_t *ptr, int x, int y, int *theta, uint32_t *ma
 
             if (y != (ptr->h - 1)) row_ptr -= ((ptr->w + UINT32_T_MASK) >> UINT32_T_SHIFT);
 
-            *theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 180; // * (180 / PI)
+            *theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 180; // * (180 / PI)		// STM32IPL: f added to the constant.
             if (*theta < 0) *theta += 180;
             *mag = fast_roundf(fast_sqrtf((x_acc * x_acc) + (y_acc * y_acc)));
             break;
@@ -118,7 +118,7 @@ static void pixel_magnitude(image_t *ptr, int x, int y, int *theta, uint32_t *ma
 
             if (y != (ptr->h - 1)) row_ptr -= ptr->w;
 
-            *theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 180; // * (180 / PI)
+            *theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 180; // * (180 / PI)		// STM32IPL: f added to the constant.
             if (*theta < 0) *theta += 180;
             *mag = fast_roundf(fast_sqrtf((x_acc * x_acc) + (y_acc * y_acc)));
             break;
@@ -173,7 +173,7 @@ static void pixel_magnitude(image_t *ptr, int x, int y, int *theta, uint32_t *ma
 
             if (y != (ptr->h - 1)) row_ptr -= ptr->w;
 
-            *theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 180; // * (180 / PI)
+            *theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 180; // * (180 / PI)		// STM32IPL: f added to the constant.
             if (*theta < 0) *theta += 180;
             *mag = fast_roundf(fast_sqrtf((x_acc * x_acc) + (y_acc * y_acc)));
             break;

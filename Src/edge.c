@@ -18,11 +18,6 @@
 #include "stm32ipl_mem_alloc.h"
 #endif // STM32IPL
 
-// STM32IPL added
-#ifndef M_PI
-#define M_PI    3.14159265f
-#endif
-
 #ifdef IMLIB_ENABLE_BINARY_OPS
 
 typedef struct gvec {

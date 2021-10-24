@@ -12,8 +12,7 @@
 
 typedef struct xylr {
     int16_t x, y, l, r, t_l, b_l;
-}
-xylr_t;
+} xylr_t;
 
 static float sign(float x)
 {
@@ -129,16 +128,23 @@ static float calc_roundness(float blob_a, float blob_b, float blob_c)
     return IM_DIV(roundness_min, roundness_max);
 }
 
+// STM32IPL: max_blobs parameter added.
 void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int x_stride, unsigned int y_stride,
                       list_t *thresholds, bool invert, unsigned int area_threshold, unsigned int pixels_threshold,
                       bool merge, int margin,
                       bool (*threshold_cb)(void*,find_blobs_list_lnk_data_t*), void *threshold_cb_arg,
                       bool (*merge_cb)(void*,find_blobs_list_lnk_data_t*,find_blobs_list_lnk_data_t*), void *merge_cb_arg,
-                      unsigned int x_hist_bins_max, unsigned int y_hist_bins_max)
+                      unsigned int x_hist_bins_max, unsigned int y_hist_bins_max, uint32_t max_blobs)
 {
+	 int32_t max_size; // STM32IPL
+
+	 // If max_blobs is zero, there is nothing else to do.
+	 if (!max_blobs)	// STM32IPL
+		 return;
+
     // Same size as the image so we don't have to translate.
 
-	image_t bmp;
+		image_t bmp;
     bmp.w = ptr->w;
     bmp.h = ptr->h;
     bmp.bpp = IMAGE_BPP_BINARY;
@@ -153,22 +159,31 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
     lifo_t lifo;
     size_t lifo_len;
 
-// FIXME: metti la cosa della costante del config
+    list_init(out, sizeof(find_blobs_list_lnk_data_t)); // STM32IPL: moved here from below.
+
 #ifndef STM32IPL
     lifo_alloc_all(&lifo, &lifo_len, sizeof(xylr_t));
 #else
-    lifo_len = 500; /* xalloc (500 * 12) */
+    // Reserve memory to contain max_blobs objects.
+    max_size = fb_avail() - max_blobs * (sizeof(list_lnk_t) + sizeof(find_blobs_list_lnk_data_t));
+    if (max_size <= 0) {
+        fb_free(); // bitmap
+        return;
+    }
+
+    // Allocate the remaining memory to the lifo.
+    lifo_len = max_size / sizeof(xylr_t);
     lifo_alloc(&lifo, lifo_len, sizeof(xylr_t));
 #endif
 
-    list_init(out, sizeof(find_blobs_list_lnk_data_t));
-
     size_t code = 0;
+
     for (list_lnk_t *it = iterator_start_from_head(thresholds); it; it = iterator_next(it)) {
         color_thresholds_list_lnk_data_t lnk_data;
         iterator_get(thresholds, it, &lnk_data);
 
         switch(ptr->bpp) {
+					
             case IMAGE_BPP_BINARY: {
                 for (int y = roi->y, yy = roi->y + roi->h, y_max = yy - 1; y < yy; y += y_stride) {
                     uint32_t *row_ptr = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(ptr, y);
@@ -273,20 +288,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = top_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_BINARY(IMAGE_GET_BINARY_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = i + 1; // Don't test the same pixel again...
-                                                    context.b_l = bot_left;
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y - 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                // if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) && (ok = COLOR_THRESHOLD_BINARY(IMAGE_GET_BINARY_PIXEL_FAST(row, i), &lnk_data, invert))) {
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+                                                	ok = COLOR_THRESHOLD_BINARY(IMAGE_GET_BINARY_PIXEL_FAST(row, i), &lnk_data, invert);
+                                                	if (ok) {
+                                                		xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = i + 1; // Don't test the same pixel again...
+														context.b_l = bot_left;
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y - 1;
+														recurse = true;
+														break;
+													}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -306,20 +325,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = bot_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_BINARY(IMAGE_GET_BINARY_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = top_left;
-                                                    context.b_l = i + 1; // Don't test the same pixel again...
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y + 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                // if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) && (ok = COLOR_THRESHOLD_BINARY(IMAGE_GET_BINARY_PIXEL_FAST(row, i), &lnk_data, invert))) {
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+                                                	ok = COLOR_THRESHOLD_BINARY(IMAGE_GET_BINARY_PIXEL_FAST(row, i), &lnk_data, invert);
+                                                	if (ok) {
+														xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = top_left;
+														context.b_l = i + 1; // Don't test the same pixel again...
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y + 1;
+														recurse = true;
+														break;
+                                                	}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -430,11 +453,11 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
 #ifndef STM32IPL
                                 	list_push_back(out, &lnk_blob);
 #else
-                                	list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
-                                    if (tmp){
-                                    	xfree(tmp);
-                                    	list_push_back(out, &lnk_blob);
-                                    }
+                                	if (max_blobs) {
+                                		list_push_back(out, &lnk_blob);
+                                		max_blobs--;
+                                	} else
+                                		break;
 #endif
                                 } else {
                                     if (lnk_blob.x_hist_bins) xfree(lnk_blob.x_hist_bins);
@@ -553,20 +576,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = top_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_GRAYSCALE(IMAGE_GET_GRAYSCALE_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = i + 1; // Don't test the same pixel again...
-                                                    context.b_l = bot_left;
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y - 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                //if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) && (ok = COLOR_THRESHOLD_GRAYSCALE(IMAGE_GET_GRAYSCALE_PIXEL_FAST(row, i), &lnk_data, invert))) {
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+                                                	ok = COLOR_THRESHOLD_GRAYSCALE(IMAGE_GET_GRAYSCALE_PIXEL_FAST(row, i), &lnk_data, invert);
+                                                	if (ok) {
+														xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = i + 1; // Don't test the same pixel again...
+														context.b_l = bot_left;
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y - 1;
+														recurse = true;
+														break;
+                                                	}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -586,20 +613,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = bot_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_GRAYSCALE(IMAGE_GET_GRAYSCALE_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = top_left;
-                                                    context.b_l = i + 1; // Don't test the same pixel again...
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y + 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                //if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) && (ok = COLOR_THRESHOLD_GRAYSCALE(IMAGE_GET_GRAYSCALE_PIXEL_FAST(row, i), &lnk_data, invert))) {
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+                                                	ok = COLOR_THRESHOLD_GRAYSCALE(IMAGE_GET_GRAYSCALE_PIXEL_FAST(row, i), &lnk_data, invert);
+                                                	if (ok) {
+														xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = top_left;
+														context.b_l = i + 1; // Don't test the same pixel again...
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y + 1;
+														recurse = true;
+														break;
+                                                	}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -710,11 +741,11 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
 #ifndef STM32IPL
                                 	list_push_back(out, &lnk_blob);
 #else
-                                	list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
-                                    if (tmp){
-                                    	xfree(tmp);
-                                    	list_push_back(out, &lnk_blob);
-                                    }
+                                	if (max_blobs) {
+                                		list_push_back(out, &lnk_blob);
+                                		max_blobs--;
+                                	} else
+                                		break;
 #endif
                                 } else {
                                     if (lnk_blob.x_hist_bins) xfree(lnk_blob.x_hist_bins);
@@ -833,20 +864,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = top_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_RGB565(IMAGE_GET_RGB565_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = i + 1; // Don't test the same pixel again...
-                                                    context.b_l = bot_left;
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y - 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                //if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) && (ok = COLOR_THRESHOLD_RGB565(IMAGE_GET_RGB565_PIXEL_FAST(row, i), &lnk_data, invert))) {
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+                                                	ok = COLOR_THRESHOLD_RGB565(IMAGE_GET_RGB565_PIXEL_FAST(row, i), &lnk_data, invert);
+                                                	if (ok) {
+														xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = i + 1; // Don't test the same pixel again...
+														context.b_l = bot_left;
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y - 1;
+														recurse = true;
+														break;
+                                                	}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -866,20 +901,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = bot_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_RGB565(IMAGE_GET_RGB565_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = top_left;
-                                                    context.b_l = i + 1; // Don't test the same pixel again...
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y + 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                //if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) && (ok = COLOR_THRESHOLD_RGB565(IMAGE_GET_RGB565_PIXEL_FAST(row, i), &lnk_data, invert))) {
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+                                                	ok = COLOR_THRESHOLD_RGB565(IMAGE_GET_RGB565_PIXEL_FAST(row, i), &lnk_data, invert);
+													if (ok) {
+														xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = top_left;
+														context.b_l = i + 1; // Don't test the same pixel again...
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y + 1;
+														recurse = true;
+														break;
+													}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -990,11 +1029,11 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
 #ifndef STM32IPL
                                 	list_push_back(out, &lnk_blob);
 #else
-                                	list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
-                                    if (tmp){
-                                    	xfree(tmp);
-                                    	list_push_back(out, &lnk_blob);
-                                    }
+                                	if (max_blobs) {
+                                		list_push_back(out, &lnk_blob);
+                                		max_blobs--;
+                                	} else
+                                		break;
 #endif
                                 } else {
                                     if (lnk_blob.x_hist_bins) xfree(lnk_blob.x_hist_bins);
@@ -1010,27 +1049,30 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                 break;
             }
             case IMAGE_BPP_RGB888: {
-                for (int y = roi->y, yy = roi->y + roi->h, y_max = yy - 1; y < yy; y += y_stride) {
-                    rgb888_t *row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y);
-                    uint32_t *bmp_row_ptr = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(&bmp, y);
-                    for (int x = roi->x + (y % x_stride), xx = roi->x + roi->w, x_max = xx - 1; x < xx; x += x_stride) {
-                        if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row_ptr, x))
-                        && COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x), &lnk_data, invert)) {
-                            int old_x = x;
+            	for (int y = roi->y, yy = roi->y + roi->h, y_max = yy - 1; y < yy; y += y_stride) {
+            		rgb888_t *row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y);
+            		uint32_t *bmp_row_ptr = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(&bmp, y);
+            		for (int x = roi->x + (y % x_stride), xx = roi->x + roi->w, x_max = xx - 1; x < xx; x += x_stride) {
+									// STM32IPL: modifications to avoid compiling errors.
+									// STM32IPL if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row_ptr, x))
+									// STM32IPL 		&& COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x), &lnk_data, invert)) {
+            			rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x);	// STM32IPL
+            			if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row_ptr, x)) && COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert)) {	// STM32IPL
+														int old_x = x;
                             int old_y = y;
-
-                            float corners_acc[FIND_BLOBS_CORNERS_RESOLUTION];
+								
+													float corners_acc[FIND_BLOBS_CORNERS_RESOLUTION];
                             point_t corners[FIND_BLOBS_CORNERS_RESOLUTION];
                             int corners_n[FIND_BLOBS_CORNERS_RESOLUTION];
                             // Ensures that maximum goes all the way to the edge of the image.
                             for (int i = 0; i < FIND_BLOBS_CORNERS_RESOLUTION; i++) {
-                                corners[i].x = (int16_t)IM_MAX(IM_MIN((x_max * sign(cos_table[FIND_BLOBS_ANGLE_RESOLUTION*i])), x_max), 0); // STM32IPL: cast added.
-                                corners[i].y = (int16_t)IM_MAX(IM_MIN(y_max * sign(sin_table[FIND_BLOBS_ANGLE_RESOLUTION*i]), y_max), 0); // STM32IPL: cast added.
+                                corners[i].x = (int16_t)(IM_MAX(IM_MIN(x_max * sign(cos_table[FIND_BLOBS_ANGLE_RESOLUTION*i]), x_max), 0)); // STM32IPL: cast added.
+                                corners[i].y = (int16_t)(IM_MAX(IM_MIN(y_max * sign(sin_table[FIND_BLOBS_ANGLE_RESOLUTION*i]), y_max), 0)); // STM32IPL: cast added.
                                 corners_acc[i] = (corners[i].x * cos_table[FIND_BLOBS_ANGLE_RESOLUTION*i]) +
                                                  (corners[i].y * sin_table[FIND_BLOBS_ANGLE_RESOLUTION*i]);
                                 corners_n[i] = 1;
                             }
-
+	
                             int blob_pixels = 0;
                             int blob_perimeter = 0;
                             int blob_cx = 0;
@@ -1043,23 +1085,45 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                             if (y_hist_bins) memset(y_hist_bins, 0, ptr->h * sizeof(uint16_t));
 
                             // Scanline Flood Fill Algorithm //
-
                             for(;;) {
-                                int left = x, right = x;
+
+															int left = x, right = x;
                                 rgb888_t *row = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y);
                                 uint32_t *bmp_row = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(&bmp, y);
 
+															/* STM32IPL: rewritten below.
                                 while ((left > roi->x)
                                 && (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, left - 1))
                                 && COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row, left - 1), &lnk_data, invert)) {
                                     left--;
                                 }
+															*/
+															// STM32IPL: new version.
+															bool t = true;
+															while (t) {
+																rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(row, left - 1);
+																if ((left > roi->x) && (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, left - 1)) && COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert)) {
+                                    left--;
+                                } else
+																	t = false;
+															}
 
+															/* STM32IPL: rewritten below.															
                                 while ((right < (roi->x + roi->w - 1))
                                 && (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, right + 1))
                                 && COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row, right + 1), &lnk_data, invert)) {
                                     right++;
                                 }
+															*/
+															// STM32IPL: new version.
+															t = true;
+															while (t) {
+																rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(row, right + 1);
+																if ((right < (roi->x + roi->w - 1)) && (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, right + 1)) && COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert)) {
+                                    right++;
+                                } else
+																t = false;
+															}
 
                                 for (int i = left; i <= right; i++) {
                                     IMAGE_SET_BINARY_PIXEL_FAST(bmp_row, i);
@@ -1102,8 +1166,9 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                 int top_left = left;
                                 int bot_left = left;
                                 bool break_out = false;
+												
                                 for(;;) {
-                                    if (lifo_size(&lifo) < lifo_len) {
+																	if (lifo_size(&lifo) < lifo_len) {
 
                                         if (y > roi->y) {
                                             row = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y - 1);
@@ -1113,20 +1178,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = top_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = i + 1; // Don't test the same pixel again...
-                                                    context.b_l = bot_left;
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y - 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+																									rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(row, i);
+                                                	ok = COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert);
+                                                	if (ok) {
+														xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = i + 1; // Don't test the same pixel again...
+														context.b_l = bot_left;
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y - 1;
+														recurse = true;
+														break;
+                                                	}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -1146,20 +1215,25 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                                             for (int i = bot_left; i <= right; i++) {
                                                 bool ok = true; // Does nothing if thresholding is skipped.
 
-                                                if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i))
-                                                && (ok = COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row, i), &lnk_data, invert))) {
-                                                    xylr_t context;
-                                                    context.x = x;
-                                                    context.y = y;
-                                                    context.l = left;
-                                                    context.r = right;
-                                                    context.t_l = top_left;
-                                                    context.b_l = i + 1; // Don't test the same pixel again...
-                                                    lifo_enqueue(&lifo, &context);
-                                                    x = i;
-                                                    y = y + 1;
-                                                    recurse = true;
-                                                    break;
+                                                // STM32IPL: removed assignment in condition.
+                                                //if ((!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) && (ok = COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row, i), &lnk_data, invert))) {
+                                                if (!IMAGE_GET_BINARY_PIXEL_FAST(bmp_row, i)) {
+																									rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(row, i);
+                                                	ok = COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert);
+                                                	if(ok) {
+														xylr_t context;
+														context.x = x;
+														context.y = y;
+														context.l = left;
+														context.r = right;
+														context.t_l = top_left;
+														context.b_l = i + 1; // Don't test the same pixel again...
+														lifo_enqueue(&lifo, &context);
+														x = i;
+														y = y + 1;
+														recurse = true;
+														break;
+                                                	}
                                                 }
 
                                                 blob_perimeter += (!ok) && (i != left) && (i != right);
@@ -1270,25 +1344,24 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
 #ifndef STM32IPL
                                 	list_push_back(out, &lnk_blob);
 #else
-                                	list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
-                                    if (tmp){
-                                    	xfree(tmp);
-                                    	list_push_back(out, &lnk_blob);
-                                    }
+                                	if (max_blobs) {
+                                		list_push_back(out, &lnk_blob);
+                                		max_blobs--;
+                                	} else
+                                		break;
 #endif
                                 } else {
                                     if (lnk_blob.x_hist_bins) xfree(lnk_blob.x_hist_bins);
                                     if (lnk_blob.y_hist_bins) xfree(lnk_blob.y_hist_bins);
                                 }
                             }
-
                             x = old_x;
                             y = old_y;
                         }
                     }
                 }
                 break;
-            }
+            }						
             default: {
                 break;
             }
@@ -1364,26 +1437,10 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                         lnk_blob.roundness = lnk_blob.roundness_acc / lnk_blob.pixels;
                         merge_occured = true;
                     } else {
-#ifndef STM32IPL
                     	list_push_back(out, &tmp_blob);
-#else
-                        list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out->data_len);
-						if (tmp){
-						 xfree(tmp);
-						 list_push_back(out, &tmp_blob);
-						}
-#endif
                     }
                 }
-#ifndef STM32IPL
-                list_push_back(out_temp, &lnk_blob);
-#else
-                list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + out_temp.data_len);
-				if (tmp){
-				 xfree(tmp);
-				 list_push_back(&out_temp, &lnk_blob);
-				}
-#endif
+                list_push_back(&out_temp, &lnk_blob);
             }
 
             list_copy(out, &out_temp);
@@ -1395,6 +1452,7 @@ void imlib_find_blobs(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
     }
 }
 
+#ifndef STM32IPL
 void imlib_flood_fill_int(image_t *out, image_t *img, int x, int y,
                           int seed_threshold, int floating_threshold,
                           flood_fill_call_back_t cb, void *data)
@@ -1402,12 +1460,7 @@ void imlib_flood_fill_int(image_t *out, image_t *img, int x, int y,
     lifo_t lifo;
     size_t lifo_len;
 
-#ifndef STM32IPL
     lifo_alloc_all(&lifo, &lifo_len, sizeof(xylr_t));
-#else
-    lifo_len = 500; /* xalloc (500 * 12) */
-    lifo_alloc(&lifo, lifo_len, sizeof(xylr_t));
-#endif
 
     switch(img->bpp) {
         case IMAGE_BPP_BINARY: {
@@ -1762,3 +1815,4 @@ void imlib_flood_fill_int(image_t *out, image_t *img, int x, int y,
 
     lifo_free(&lifo);
 }
+#endif // STM32IPL

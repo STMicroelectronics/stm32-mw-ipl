@@ -63,13 +63,13 @@
 #define IMLIB_ENABLE_BILATERAL
 
 // Enable cartoon()
- #define IMLIB_ENABLE_CARTOON
+// #define IMLIB_ENABLE_CARTOON
 
 // Enable linpolar()
-#define IMLIB_ENABLE_LINPOLAR
+// STM32IPL #define IMLIB_ENABLE_LINPOLAR
 
 // Enable logpolar()
-#define IMLIB_ENABLE_LOGPOLAR
+// STM32IPL #define IMLIB_ENABLE_LOGPOLAR
 
 // Enable lens_corr()
 #define IMLIB_ENABLE_LENS_CORR
@@ -79,7 +79,7 @@
 
 // Enable phasecorrelate()
 #if defined(IMLIB_ENABLE_ROTATION_CORR)
-#define IMLIB_ENABLE_FIND_DISPLACEMENT
+// STM32IPL #define IMLIB_ENABLE_FIND_DISPLACEMENT
 #endif
 
 // Enable get_similarity()
@@ -89,13 +89,13 @@
 #define IMLIB_ENABLE_FIND_LINES
 
 // Enable find_line_segments()
-#define IMLIB_ENABLE_FIND_LINE_SEGMENTS
+// STM32IPL #define IMLIB_ENABLE_FIND_LINE_SEGMENTS
 
 // Enable find_circles()
 #define IMLIB_ENABLE_FIND_CIRCLES
 
 // Enable find_rects()
-#define IMLIB_ENABLE_FIND_RECTS
+// STM32IPL #define IMLIB_ENABLE_FIND_RECTS
 
 // Enable find_qrcodes() (14 KB)
 // STM32IPL #define IMLIB_ENABLE_QRCODES

@@ -9,7 +9,7 @@
  * Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.
  *
- * Portions of this file is part of the OpenMV project.
+ * Portions of this file are part of the OpenMV project.
  *
  * Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
  * Copyright (c) 2013-2019 Kwabena W. Agyeman <kwagyeman@openmv.io>
@@ -22,7 +22,7 @@
  */
 
 /* This file has been created for STM32IPL and contains code moved here from
- * apriltag.c.
+ * apriltag.c file.
  */
 
 
@@ -43,11 +43,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef M_TWOPI
-# define M_TWOPI       6.2831853071795862319959  /* 2*pi */
+// STM32IPL		# define M_TWOPI       6.2831853071795862319959  /* 2*pi */
+# define M_TWOPI	6.2831853f  /* 2*pi */		// STM32IPL
 #endif
 
  #ifndef M_PI
- # define M_PI 3.141592653589793238462643383279502884196
+ // STM32IPL		# define M_PI 3.141592653589793238462643383279502884196
+ # define M_PI 		3.14159265f		// STM32IPL	
  #endif
 
 #define to_radians(x) ( (x) * (M_PI / 180.0 ))
@@ -191,10 +193,10 @@ static inline float dclamp(float a, float min, float max)
 static inline int fltcmp(float f1, float f2)
 {
 	float epsilon = f1 - f2;
-	if (epsilon < 0.0)
+	if (epsilon < 0.0f)		// STM32IPL: added f to the constant.
 		return -1;
 	else
-		if (epsilon > 0.0)
+		if (epsilon > 0.0f)	// STM32IPL: added f to the constant.
 			return 1;
 		else
 			return 0;
@@ -203,10 +205,10 @@ static inline int fltcmp(float f1, float f2)
 static inline int dblcmp(float d1, float d2)
 {
 	float epsilon = d1 - d2;
-	if (epsilon < 0.0)
+	if (epsilon < 0.0f)	// STM32IPL: added f to the constant.
 		return -1;
 	else
-		if (epsilon > 0.0)
+		if (epsilon > 0.0f)	// STM32IPL: added f to the constant.
 			return 1;
 		else
 			return 0;
@@ -246,7 +248,7 @@ typedef struct
  * calculations which are singular at zero values (i.e. inverting a matrix with
  * a zero or near-zero determinant).
  */
-#define MATD_EPS 1e-8
+#define MATD_EPS 1e-8f		// STM32IPL: f added to the constant.
 
 /**
  * A macro to reference a specific matd_t data element given it's zero-based

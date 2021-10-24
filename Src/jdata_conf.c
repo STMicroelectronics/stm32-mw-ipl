@@ -1,6 +1,6 @@
 /**
  ******************************************************************************
- * @file    jdatasrc_conf.c
+ * @file    jdata_conf.c
  * @author  MCD Application Team
  * @brief   This file implements LibJPEG read/write functions.
  ******************************************************************************
@@ -33,18 +33,38 @@
  */
 size_t read_file(JFILE *file, uint8_t *buf, uint32_t sizeofbuf)
 {
-  static size_t BytesReadfile;
-  f_read(file, buf , sizeofbuf, &BytesReadfile);
-  return BytesReadfile; 
+#ifdef STM32IPL_ENABLE_JPEG
+	static size_t BytesReadfile;
+
+	f_read(file, buf , sizeofbuf, &BytesReadfile);
+
+	return BytesReadfile;
+#else /* STM32IPL_ENABLE_JPEG */
+	/* Prevent unused argument(s) compilation warning. */
+	(void)(file);
+	(void)(buf);
+	(void)(sizeofbuf);
+
+ 	return 0;
+#endif /* STM32IPL_ENABLE_JPEG */
 }
 
 size_t write_file(JFILE *file, uint8_t *buf, uint32_t sizeofbuf)
 {
-  static size_t BytesWritefile;
+#ifdef STM32IPL_ENABLE_JPEG
+	static size_t BytesWritefile;
 
-  f_write(file, buf , sizeofbuf, &BytesWritefile);
+	f_write(file, buf , sizeofbuf, &BytesWritefile);
 
-  return BytesWritefile;
+	return BytesWritefile;
+#else /* STM32IPL_ENABLE_JPEG */
+	/* Prevent unused argument(s) compilation warning. */
+	(void)(file);
+	(void)(buf);
+	(void)(sizeofbuf);
+
+	return 0;
+#endif /* STM32IPL_ENABLE_JPEG */
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

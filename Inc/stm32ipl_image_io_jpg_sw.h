@@ -19,16 +19,27 @@
 #ifndef __STM32IPL_IMAGE_IO_JPG_SW_H_
 #define __STM32IPL_IMAGE_IO_JPG_SW_H_
 
-#include "stm32ipl_conf.h"
-
-#ifndef STM32IPL_USE_HW_JPEG_CODEC
-
 #include "stm32ipl.h"
+
+#ifdef STM32IPL_ENABLE_IMAGE_IO
+#ifdef STM32IPL_ENABLE_JPEG
+#ifndef STM32IPL_ENABLE_HW_JPEG_CODEC
+
 #include "ff.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 stm32ipl_err_t readJPEGSW(image_t *img, FIL *fp);
 stm32ipl_err_t saveJPEGSW(const image_t *img, const char *filename);
 
-#endif /* STM32IPL_USE_HW_JPEG_CODEC */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* STM32IPL_ENABLE_HW_JPEG_CODEC */
+#endif /* STM32IPL_ENABLE_JPEG */
+#endif /* STM32IPL_ENABLE_IMAGE_IO */
 
 #endif /* __STM32IPL_IMAGE_IO_JPG_SW_H_ */

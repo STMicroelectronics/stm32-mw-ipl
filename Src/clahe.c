@@ -101,7 +101,7 @@ int CLAHE (kz_pixel_t* pImage, unsigned int uiXRes, unsigned int uiYRes,
 #endif /* BYTE_IMAGE */
     if (Min >= Max) return -6;            /* minimum equal or larger than maximum */
     if (uiNrX < 2 || uiNrY < 2) return -7;/* at least 4 contextual regions required */
-    if (fCliplimit == 1.0) return 0;      /* is OK, immediately returns original image. */
+    if (fCliplimit == 1.0f) return 0;      /* is OK, immediately returns original image. */	// STM32IPL: f added to the constant.
     if (uiNrBins == 0) uiNrBins = 128;    /* default value when not specified */
 
     pulMapArray=(unsigned long *)fb_alloc(sizeof(unsigned long)*uiNrX*uiNrY*uiNrBins, FB_ALLOC_NO_HINT);
@@ -110,7 +110,7 @@ int CLAHE (kz_pixel_t* pImage, unsigned int uiXRes, unsigned int uiYRes,
     uiXSize = uiXRes/uiNrX; uiYSize = uiYRes/uiNrY;  /* Actual size of contextual regions */
     ulNrPixels = (unsigned long)uiXSize * (unsigned long)uiYSize;
 
-    if(fCliplimit > 0.0) {                /* Calculate actual cliplimit  */
+    if(fCliplimit > 0.0f) {                /* Calculate actual cliplimit  */	// STM32IPL: f added to the constant.
        ulClipLimit = (unsigned long) (fCliplimit * (uiXSize * uiYSize) / uiNrBins);
        ulClipLimit = (ulClipLimit < 1UL) ? 1UL : ulClipLimit;
     }

@@ -9,7 +9,7 @@
  * Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.
  *
- * Portions of this file is part of the OpenMV project.
+ * Portions of this file are part of the OpenMV project.
  *
  * Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
  * Copyright (c) 2013-2019 Kwabena W. Agyeman <kwagyeman@openmv.io>
@@ -21,18 +21,23 @@
  ******************************************************************************
  */
 
-// FIXME: perchè "Portions of this file is part of the OpenMV project" ? rivedere!!!
-
 #include "stm32ipl.h"
+#include "stm32ipl_imlib_int.h"
 
-/*
+extern const float xyz_table[256];
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
  * brief Copies the source image pixels to the destination image buffer.
  * The two buffers must have the same size.
  * Assuming the two given data pointers point to valid buffers.
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * param src	 Source image data.
  * param dst     Destination image data.
- * param size	 Size (in bytes) of the image buffer.
+ * param size	 Size (bytes) of the image buffer.
  * param reverse Forces the reversed processing (from the last to the first pixel).
  * return		 void.
  */
@@ -49,7 +54,7 @@ static void STM32Ipl_SimpleCopy(const uint8_t *src, uint8_t *dst, uint32_t size,
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from Binary to Grayscale and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -85,7 +90,7 @@ static void STM32Ipl_BinaryToY8(const uint8_t *src, uint8_t *dst, uint32_t width
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from Binary to RGB565 and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -121,7 +126,7 @@ static void STM32Ipl_BinaryToRGB565(const uint8_t *src, uint8_t *dst, uint32_t w
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from Binary to RGB888 and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -164,7 +169,7 @@ static void STM32Ipl_BinaryToRGB888(const uint8_t *src, uint8_t *dst, uint32_t w
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from Grayscale to RGB565 and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -205,7 +210,7 @@ static void STM32Ipl_Y8ToBinary(const uint8_t *src, uint8_t *dst, uint32_t width
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from Grayscale to RGB565 and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -236,7 +241,7 @@ static void STM32Ipl_Y8ToRGB565(const uint8_t *src, uint8_t *dst, uint32_t width
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from Grayscale to RGB888 and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -270,7 +275,7 @@ static void STM32Ipl_Y8ToRGB888(const uint8_t *src, uint8_t *dst, uint32_t width
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from RGB565 to Binary and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -308,7 +313,7 @@ static void STM32Ipl_RGB565ToBinary(const uint8_t *src, uint8_t *dst, uint32_t w
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from RGB565 to Grayscale and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -339,7 +344,7 @@ static void STM32Ipl_RGB565ToY8(const uint8_t *src, uint8_t *dst, uint32_t width
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from RGB565 to RGB888 and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -374,7 +379,7 @@ static void STM32Ipl_RGB565ToRGB888(const uint8_t *src, uint8_t *dst, uint32_t w
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from RGB888 to Binary and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -414,7 +419,7 @@ static void STM32Ipl_RGB888ToBinary(const uint8_t *src, uint8_t *dst, uint32_t w
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from RGB888 to Grayscale and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -448,7 +453,7 @@ static void STM32Ipl_RGB888ToY8(const uint8_t *src, uint8_t *dst, uint32_t width
 	}
 }
 
-/*
+/**
  * brief Converts the source image pixels from RGB888 to RGB565 and stores the converted data to the destination buffer.
  * Assuming the two given data pointers point to valid buffers.
  * param src	 Source image data buffer.
@@ -483,24 +488,28 @@ static void STM32Ipl_RGB888ToRGB565(const uint8_t *src, uint8_t *dst, uint32_t w
 	}
 }
 
-/*
- * brief Converts the source image data to the format of the destination image and stores the
+/**
+ * @brief Converts the source image data to the format of the destination image and stores the
  * converted data to the destination buffer. The two images must have the same resolution.
  * The destination image data buffer must be already allocated and must have the right size to
  * contain the converted image.
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
- * param src	  Source image.
- * param dst	  Destination image.
- * param reverse If true, the processing is executed in reverse mode (from the last to the first pixel),
+ * @param src	  Source image.
+ * @param dst	  Destination image.
+ * @param reverse If true, the processing is executed in reverse mode (from the last to the first pixel),
  * otherwise it is executed normally (from the first to the last pixel).
- * return		  stm32ipl_err_Ok on success, error otherwise.
+ * @return		  stm32ipl_err_Ok on success, error otherwise.
  */
-static stm32ipl_err_t STM32Ipl_ConvertRev(const image_t *src, image_t *dst, bool reverse)
+stm32ipl_err_t STM32Ipl_ConvertRev(const image_t *src, image_t *dst, bool reverse)
 {
+	STM32IPL_CHECK_VALID_IMAGE(src)
+	STM32IPL_CHECK_VALID_IMAGE(dst)
+	STM32IPL_CHECK_FORMAT(src, STM32IPL_IF_ALL)
+	STM32IPL_CHECK_FORMAT(dst, STM32IPL_IF_ALL)
+	STM32IPL_CHECK_SAME_SIZE(src, dst)
+
 	if (src->data == dst->data)
 		return stm32ipl_err_InvalidParameter;
-
-	STM32IPL_CHECK_SAME_RESOLUTION(src, dst)
 
 	switch (src->bpp) {
 		case IMAGE_BPP_BINARY:
@@ -604,21 +613,129 @@ static stm32ipl_err_t STM32Ipl_ConvertRev(const image_t *src, image_t *dst, bool
 	return stm32ipl_err_Ok;
 }
 
-/*
+/**
  * @brief Converts the source image data to the format of the destination image and stores the
  * converted data to the destination buffer. The two images must have the same resolution.
  * The destination image data buffer must be already allocated and must have the right size to
  * contain the converted image.
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
- * @param src	  Source image.
- * @param dst	  Destination image.
+ * @param src	  Source image; if it is not valid, an error is returned.
+ * @param dst	  Destination image; if it is not valid, an error is returned.
  * @return		  stm32ipl_err_Ok on success, error otherwise.
  */
 stm32ipl_err_t STM32Ipl_Convert(const image_t *src, image_t *dst)
 {
-	STM32IPL_CHECK_VALID_IMAGE(src)
-	STM32IPL_CHECK_VALID_IMAGE(dst)
-	STM32IPL_CHECK_FORMAT(src, STM32IPL_IF_ALL)
-
 	return STM32Ipl_ConvertRev(src, dst, false);
 }
+
+/**
+ * @brief Converts a RGB565 pixel value to an L value of L*A*B* color space.
+ * @param pixel	  RGB565 pixel value.
+ * @return		  The converted value.
+ */
+int8_t STM32Ipl_RGB565ToL(uint16_t pixel)
+{
+	return imlib_rgb565_to_l(pixel);
+}
+
+/**
+ * @brief Converts a RGB565 pixel value to an A value of L*A*B* color space.
+ * @param pixel	  RGB565 pixel value.
+ * @return		  The converted value.
+ */
+int8_t STM32Ipl_RGB565ToA(uint16_t pixel)
+{
+	return imlib_rgb565_to_a(pixel);
+}
+
+/**
+ * @brief Converts a RGB565 pixel value to an B value of L*A*B* color space.
+ * @param pixel	  RGB565 pixel value.
+ * @return		  The converted value.
+ */
+int8_t STM32Ipl_RGB565ToB(uint16_t pixel)
+{
+	return imlib_rgb565_to_b(pixel);
+}
+
+/**
+ * @brief Converts a RGB888 pixel value to an L value of L*A*B* color space.
+ * @param pixel	  RGB888 pixel value.
+ * @return		  The converted value.
+ */
+int8_t STM32Ipl_RGB888ToL(rgb888_t pixel)
+{
+	return imlib_rgb888_to_l(pixel);
+}
+
+/**
+ * @brief Converts a RGB888 pixel value to an A value of L*A*B* color space.
+ * @param pixel	  RGB888 pixel value.
+ * @return		  The converted value.
+ */
+int8_t STM32Ipl_RGB888ToA(rgb888_t pixel)
+{
+	return imlib_rgb888_to_a(pixel);
+}
+
+/**
+ * @brief Converts a RGB888 pixel value to an B value of L*A*B* color space.
+ * @param pixel	  RGB888 pixel value.
+ * @return		  The converted value.
+ */
+int8_t STM32Ipl_RGB888ToB(rgb888_t pixel)
+{
+	return imlib_rgb888_to_b(pixel);
+}
+
+/**
+ * @brief Converts a L*A*B* pixel value to an RGB888 value.
+ * @param l	  L component of the pixel value.
+ * @param a	  A component of the pixel value.
+ * @param b	  B component of the pixel value.
+ * @return	  The converted value.
+ */
+rgb888_t STM32Ipl_LABToRGB888(uint8_t l, int8_t a, int8_t b)
+{
+	return imlib_lab_to_rgb888(l, a, b);
+}
+
+/**
+ * @brief Converts a L*A*B* pixel value to an RGB565 value.
+ * @param l	  L component of the pixel value.
+ * @param a	  A component of the pixel value.
+ * @param b	  B component of the pixel value.
+ * @return	  The converted value.
+ */
+uint16_t STM32Ipl_LABToRGB565(uint8_t l, int8_t a, int8_t b)
+{
+	return imlib_lab_to_rgb(l, a, b);
+}
+
+/**
+ * @brief Converts a YCbCr pixel value to an RGB565 value.
+ * @param y	  Y component of the pixel value.
+ * @param u	  Cb component of the pixel value.
+ * @param v	  Cr component of the pixel value.
+ * @return	  The converted value.
+ */
+uint16_t STM32Ipl_YUVToRGB565(uint8_t y, int8_t u, int8_t v)
+{
+	return imlib_yuv_to_rgb(y, u, v);
+}
+
+/**
+ * @brief Converts a YCbCr pixel value to an RGB888 value.
+ * @param y	  Y component of the pixel value.
+ * @param u	  Cb component of the pixel value.
+ * @param v	  Cr component of the pixel value.
+ * @return	  The converted value.
+ */
+rgb888_t STM32Ipl_YUVToRGB888(uint8_t y, int8_t u, int8_t v)
+{
+	return imlib_yuv_to_rgb888(y, u, v);
+}
+
+#ifdef __cplusplus
+}
+#endif

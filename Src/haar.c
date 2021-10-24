@@ -174,6 +174,7 @@ array_t *imlib_detect_objects(image_t *image, cascade_t *cascade, rectangle_t *r
     return objects;
 }
 
+#ifdef STM32IPL_ENABLE_IMAGE_IO // STM32IPL
 #if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
 int imlib_load_cascade_from_file(cascade_t *cascade, const char *path)
 {
@@ -261,13 +262,14 @@ error:
     return res;
 }
 #endif //(IMLIB_ENABLE_IMAGE_FILE_IO)
+#endif /* STM32IPL_ENABLE_IMAGE_IO */ // STM32IPL
 
 int imlib_load_cascade(cascade_t *cascade, const char *path)
 {
 	memset(cascade, 0, sizeof(cascade_t)); // STM32IPL
     // built-in cascade
     if (strcmp(path, "frontalface") == 0) {
-#ifdef STM32IPL_USE_FRONTAL_FACE_CASCADE // STM32IPL
+#ifdef STM32IPL_ENABLE_FRONTAL_FACE_CASCADE // STM32IPL
         cascade->window.w            = frontalface_window_w;
         cascade->window.h            = frontalface_window_h;
         cascade->n_stages            = frontalface_n_stages;
@@ -279,11 +281,11 @@ int imlib_load_cascade(cascade_t *cascade, const char *path)
         cascade->num_rectangles_array= (int8_t  *)frontalface_num_rectangles_array;
         cascade->weights_array       = (int8_t  *)frontalface_weights_array;
         cascade->rectangles_array    = (int8_t  *)frontalface_rectangles_array;
+#endif /* STM32IPL_ENABLE_FRONTAL_FACE_CASCADE */ // STM32IPL
     }
-#endif /* STM32IPL_USE_FRONTAL_FACE_CASCADE */ // STM32IPL
     else
     if (strcmp(path, "eye") == 0) {
-#ifdef STM32IPL_USE_EYE_CASCADE // STM32IPL
+#ifdef STM32IPL_ENABLE_EYE_CASCADE // STM32IPL
         cascade->window.w            = eye_window_w;
         cascade->window.h            = eye_window_h;
         cascade->n_stages            = eye_n_stages;
@@ -295,7 +297,7 @@ int imlib_load_cascade(cascade_t *cascade, const char *path)
         cascade->num_rectangles_array= (int8_t  *)eye_num_rectangles_array;
         cascade->weights_array       = (int8_t  *)eye_weights_array;
         cascade->rectangles_array    = (int8_t  *)eye_rectangles_array;
-#endif /* STM32IPL_USE_EYE_CASCADE */ // STM32IPL
+#endif /* STM32IPL_ENABLE_EYE_CASCADE */ // STM32IPL
     } else {
         #if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
         // xml cascade

@@ -9,7 +9,7 @@
  * Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.
  *
- * Portions of this file is part of the OpenMV project.
+ * Portions of this file are part of the OpenMV project.
  *
  * Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
  * Copyright (c) 2013-2019 Kwabena W. Agyeman <kwagyeman@openmv.io>
@@ -27,11 +27,15 @@
 #ifdef STM32IPL
 
 #include <stdint.h>
-#include "umm_malloc.h" // FIXME CMARCH: 2021.07.22 provo a riabilitarlo
+#include "umm_malloc.h"
 
 #define FB_ALLOC_NO_HINT		0
 #define FB_ALLOC_PREFER_SPEED	1
 #define FB_ALLOC_PREFER_SIZE	2
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void umm_alloc_fail(void);
 
@@ -60,6 +64,10 @@ void* fb_alloc0_all(uint32_t *size, int hints);
 void fb_free(void);
 void fb_free_all(void);
 
-#endif // STM32IPL
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* STM32IPL */
 
 #endif /* __STM32IPL_MEM_ALLOC_H_ */

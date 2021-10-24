@@ -39,20 +39,35 @@ extern const float sin_table[360];
 /* STM32IPL following functions have been added to allow their "visibility" as they are inline. */
 float OMV_ATTR_ALWAYS_INLINE fast_sqrtf(float x)
 {
+#if defined ( __CC_ARM )
+    __asm volatile
+    {
+        vsqrt.f32  x, x;
+    };
+#else
     asm volatile (
             "vsqrt.f32  %[r], %[x]\n"
             : [r] "=t" (x)
             : [x] "t"  (x));
+#endif
     return x;
 }
 
 int OMV_ATTR_ALWAYS_INLINE fast_floorf(float x)
 {
     int i;
+#if defined ( __CC_ARM )
+    __asm volatile
+    {
+        vcvt.S32.f32  x, x;
+        vmov.f32  i, x;
+    };
+#else
     asm volatile (
             "vcvt.S32.f32  %[r], %[x]\n"
             : [r] "=t" (i)
             : [x] "t"  (x));
+#endif
     return i;
 }
 
@@ -60,29 +75,52 @@ int OMV_ATTR_ALWAYS_INLINE fast_ceilf(float x)
 {
     int i;
     x += 0.9999f;
+#if defined ( __CC_ARM )
+    __asm volatile
+    {
+          vcvt.S32.f32  x, x;
+          vmov.f32  i, x;
+    };
+#else
     asm volatile (
             "vcvt.S32.f32  %[r], %[x]\n"
             : [r] "=t" (i)
             : [x] "t"  (x));
+#endif
     return i;
 }
 
 int OMV_ATTR_ALWAYS_INLINE fast_roundf(float x)
 {
     int i;
+#if defined ( __CC_ARM )
+    __asm volatile
+    {
+        vcvtr.s32.f32  x, x;
+        vmov.f32  i, x;
+    };
+#else
     asm volatile (
             "vcvtr.s32.f32  %[r], %[x]\n"
             : [r] "=t" (i)
             : [x] "t"  (x));
+#endif
     return i;
 }
 
 float OMV_ATTR_ALWAYS_INLINE fast_fabsf(float x)
 {
+#if defined ( __CC_ARM )
+    __asm volatile
+    {
+        vabs.f32  x, x;
+    };
+#else
     asm volatile (
             "vabs.f32  %[r], %[x]\n"
             : [r] "=t" (x)
             : [x] "t"  (x));
+#endif
     return x;
 }
 
