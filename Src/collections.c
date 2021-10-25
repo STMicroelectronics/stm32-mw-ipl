@@ -17,6 +17,7 @@
 // bitmap //
 ////////////
 
+#ifndef STM32IPL
 void bitmap_alloc(bitmap_t *ptr, size_t size)
 {
     ptr->size = size;
@@ -44,6 +45,7 @@ bool bitmap_bit_get(bitmap_t *ptr, size_t index)
 {
     return (ptr->data[index >> CHAR_SHIFT] >> (index & CHAR_MASK)) & 1;
 }
+#endif // STM32IPL
 
 //////////
 // lifo //
@@ -258,6 +260,9 @@ size_t list_size(list_t *ptr)
 void list_push_front(list_t *ptr, void *data)
 {
     list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + ptr->data_len);
+	if (!tmp)	// STM32IPL
+		return;	// STM32IPL
+
     memcpy(tmp->data, data, ptr->data_len);
 
     if (ptr->size++) {
@@ -276,6 +281,8 @@ void list_push_front(list_t *ptr, void *data)
 void list_push_back(list_t *ptr, void *data)
 {
     list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + ptr->data_len);
+	if (!tmp)	// STM32IPL
+		return;	// STM32IPL
     memcpy(tmp->data, data, ptr->data_len);
 
     if (ptr->size++) {
@@ -357,6 +364,8 @@ void list_insert(list_t *ptr, void *data, size_t index)
         }
 
         list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + ptr->data_len);
+		if (!tmp)	// STM32IPL
+			return;	// STM32IPL
         memcpy(tmp->data, data, ptr->data_len);
 
         tmp->next_ptr = i;
@@ -376,6 +385,8 @@ void list_insert(list_t *ptr, void *data, size_t index)
         }
 
         list_lnk_t *tmp = (list_lnk_t *) xalloc(sizeof(list_lnk_t) + ptr->data_len);
+		if (!tmp)	// STM32IPL
+			return;	// STM32IPL
         memcpy(tmp->data, data, ptr->data_len);
 
         tmp->next_ptr = i;

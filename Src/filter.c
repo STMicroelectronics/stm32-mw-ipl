@@ -8,7 +8,7 @@
  *
  * Image filtering functions.
  */
-#include "fsort.h"
+// STM32IPL		#include "fsort.h"
 #include "imlib.h"
 
 void imlib_histeq(image_t *img, image_t *mask)
@@ -1653,7 +1653,7 @@ void imlib_morph(image_t *img, const int ksize, const int *krn, const float m, c
     buf.w = img->w;
     buf.h = brows;
     buf.bpp = img->bpp;
-    const int32_t m_int = (int32_t)(65536.0 * m); // m is 1/kernel_weight
+    const int32_t m_int = (int32_t)(65536.0f * m); // m is 1/kernel_weight		// STM32IPL: f added to the constant.
 
     switch(img->bpp) {
         case IMAGE_BPP_BINARY: {
@@ -2422,6 +2422,7 @@ void imlib_bilateral_filter(image_t *img, const int ksize, float color_sigma, fl
 }
 #endif // IMLIB_ENABLE_BILATERAL
 
+#ifndef STM32IPL
 #ifdef IMLIB_ENABLE_CARTOON
 typedef struct imlib_cartoon_filter_mean_state {
     int r_acc, g_acc, b_acc, pixels;
@@ -2595,3 +2596,4 @@ void imlib_cartoon_filter(image_t *img, float seed_threshold, float floating_thr
     fb_free();
 }
 #endif // IMLIB_ENABLE_CARTOON
+#endif // STM32IPL

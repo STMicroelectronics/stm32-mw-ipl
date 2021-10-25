@@ -85,7 +85,7 @@ void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                     if (mag < 126)
                     	continue;
 
-                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 180; // * (180 / PI)
+                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 180; // * (180 / PI)		// STM32IPL: f added to the constant.
                     if (theta < 0) theta += 180;
                     int rho = (fast_roundf(((x - roi->x) * cos_table[theta]) +
                                 ((y - roi->y) * sin_table[theta])) / hough_divide) + r_diag_len_div;
@@ -151,7 +151,7 @@ void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                     if (mag < 126)
                     	continue;
 
-                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 180; // * (180 / PI)
+                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 180; // * (180 / PI)		// STM32IPL: f added to the constant.
                     if (theta < 0) theta += 180;
                     int rho = (fast_roundf(((x - roi->x) * cos_table[theta]) +
                                 ((y - roi->y) * sin_table[theta])) / hough_divide) + r_diag_len_div;
@@ -217,7 +217,7 @@ void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                     if (mag < 126)
                     	continue;
 
-                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 180; // * (180 / PI)
+                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 180; // * (180 / PI)		// STM32IPL: f added to the constant.
                     if (theta < 0) theta += 180;
                     int rho = (fast_roundf(((x - roi->x) * cos_table[theta]) +
                                 ((y - roi->y) * sin_table[theta])) / hough_divide) + r_diag_len_div;
@@ -227,7 +227,7 @@ void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
             }
             break;
         }
-        case IMAGE_BPP_RGB888: {
+        case IMAGE_BPP_RGB888: { // STM32IPL
             for (int y = roi->y + 1, yy = roi->y + roi->h - 1; y < yy; y += y_stride) {
                 rgb888_t *row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y);
                 for (int x = roi->x + (y % x_stride) + 1, xx = roi->x + roi->w - 1; x < xx; x += x_stride) {
@@ -283,7 +283,7 @@ void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                     if (mag < 126)
                     	continue;
 
-                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 180; // * (180 / PI)
+                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 180; // * (180 / PI)	// STM32IPL: f added to the constant.
                     if (theta < 0) theta += 180;
                     int rho = (fast_roundf(((x - roi->x) * cos_table[theta]) +
                                 ((y - roi->y) * sin_table[theta])) / hough_divide) + r_diag_len_div;
@@ -370,7 +370,7 @@ void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
                     float cos_mean = ((cos_table[theta_0_temp] * lnk_line.magnitude)
                             + (cos_table[theta_1_temp] * tmp_line.magnitude)) / magnitude;
 
-                    lnk_line.theta = fast_roundf(fast_atan2f(sin_mean, cos_mean) * 57.295780) % 360; // * (180 / PI)
+                    lnk_line.theta = fast_roundf(fast_atan2f(sin_mean, cos_mean) * 57.295780f) % 360; // * (180 / PI)		// STM32IPL: f added to the constant.
                     if (lnk_line.theta < 0) lnk_line.theta += 360;
                     lnk_line.rho = fast_roundf(((rho_0_temp * lnk_line.magnitude) + (rho_1_temp * tmp_line.magnitude)) / magnitude);
                     lnk_line.magnitude = magnitude / 2;
@@ -428,6 +428,7 @@ void imlib_find_lines(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int 
 }
 #endif //IMLIB_ENABLE_FIND_LINES
 
+#ifndef STM32IPL
 #ifdef IMLIB_ENABLE_FIND_LINE_SEGMENTS
 // Note this function is not used anymore, see lsd.c
 void imlib_find_line_segments(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int x_stride, unsigned int y_stride,
@@ -527,6 +528,7 @@ void imlib_find_line_segments(list_t *out, image_t *ptr, rectangle_t *roi, unsig
     fb_free(); // theta_buffer
 }
 #endif //IMLIB_ENABLE_FIND_LINE_SEGMENTS
+#endif // STM32IPL
 
 #ifdef IMLIB_ENABLE_FIND_CIRCLES
 void imlib_find_circles(list_t *out, image_t *ptr, rectangle_t *roi, unsigned int x_stride, unsigned int y_stride,
@@ -589,7 +591,7 @@ void imlib_find_circles(list_t *out, image_t *ptr, rectangle_t *roi, unsigned in
 
                     row_ptr -= ((ptr->w + UINT32_T_MASK) >> UINT32_T_SHIFT);
 
-                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 360; // * (180 / PI)
+                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 360; // * (180 / PI)		// STM32IPL: f added to the constant.
                     if (theta < 0) theta += 360;
                     int magnitude = fast_roundf(fast_sqrtf((x_acc * x_acc) + (y_acc * y_acc)));
                     int index = (roi->w * (y - roi->y)) + (x - roi->x);
@@ -652,7 +654,7 @@ void imlib_find_circles(list_t *out, image_t *ptr, rectangle_t *roi, unsigned in
 
                     row_ptr -= ptr->w;
 
-                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 360; // * (180 / PI)
+                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 360; // * (180 / PI)		// STM32IPL: f added to the constant.
                     if (theta < 0) theta += 360;
                     int magnitude = fast_roundf(fast_sqrtf((x_acc * x_acc) + (y_acc * y_acc)));
                     int index = (roi->w * (y - roi->y)) + (x - roi->x);
@@ -715,7 +717,7 @@ void imlib_find_circles(list_t *out, image_t *ptr, rectangle_t *roi, unsigned in
 
                     row_ptr -= ptr->w;
 
-                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 360; // * (180 / PI)
+                    int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 360; // * (180 / PI)		// STM32IPL: f added to the constant.
                     if (theta < 0) theta += 360;
                     int magnitude = fast_roundf(fast_sqrtf((x_acc * x_acc) + (y_acc * y_acc)));
                     int index = (roi->w * (y - roi->y)) + (x - roi->x);
@@ -795,7 +797,7 @@ void imlib_find_circles(list_t *out, image_t *ptr, rectangle_t *roi, unsigned in
 
 					row_ptr -= ptr->w;
 
-					int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780) % 360; // * (180 / PI)
+					int theta = fast_roundf((x_acc ? fast_atan2f(y_acc, x_acc) : 1.570796f) * 57.295780f) % 360; // * (180 / PI)		// STM32IPL: f added to the constant.
 					if (theta < 0)
 						theta += 360;
 					int magnitude = fast_roundf(fast_sqrtf((x_acc * x_acc) + (y_acc * y_acc)));

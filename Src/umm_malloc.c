@@ -871,7 +871,9 @@ void *umm_realloc( void *ptr, size_t size ) {
     } else {
         DBGLOG_DEBUG( "realloc a completely new block %i\n", blocks );
         void *oldptr = ptr;
-        if( (ptr = umm_malloc_core( size )) ) {
+			// STM32IPL: removed in condition assignment 	if( (ptr = umm_malloc_core( size )) ) {
+				ptr = umm_malloc_core( size );
+				if( (ptr) ) {					
             DBGLOG_DEBUG( "realloc %i to a bigger block %i, copy, and free the old\n", blockSize, blocks );
             memcpy( ptr, oldptr, curSize );
             umm_free_core( oldptr );

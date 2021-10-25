@@ -6,25 +6,30 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
- * All rights reserved.</center></h2>
+ * Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.
  *
- * This software component is licensed by ST under Ultimate Liberty license
- * SLA0044, the "License"; You may not use this file except in compliance with
- * the License. You may obtain a copy of the License at:
- *                             www.st.com/SLA0044
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
  *
  ******************************************************************************
  */
 
 #include "stm32ipl_image_io_jpg_sw.h"
 
-#ifndef STM32IPL_USE_HW_JPEG_CODEC
+#ifdef STM32IPL_ENABLE_IMAGE_IO
+#ifdef STM32IPL_ENABLE_JPEG
+#ifndef STM32IPL_ENABLE_HW_JPEG_CODEC
 
 #include "jpeglib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef uint16_t rgb565_t;
-typedef void (*ConvertLineFunction)(const uint8_t* src, uint8_t *dst, uint32_t width);
+typedef void (*ConvertLineFunction)(const uint8_t *src, uint8_t *dst, uint32_t width);
 
 /*
  * Converts a line of the source image pixels from RGB888 to RGB565 and stores the converted data to the destination.
@@ -34,13 +39,13 @@ typedef void (*ConvertLineFunction)(const uint8_t* src, uint8_t *dst, uint32_t w
  * param width	Width of the two images.
  * return 		void.
  */
-static void ConvertLineRGB888ToRGB565(const uint8_t* src, uint8_t *dst, uint32_t width)
+static void ConvertLineRGB888ToRGB565(const uint8_t *src, uint8_t *dst, uint32_t width)
 {
 	rgb888_t *rgb888 = (rgb888_t*)src;
 	rgb565_t *rgb565 = (uint16_t*)dst;
 
 	for (uint32_t i = 0; i < width; i++) {
-		uint16_t r = ( rgb888[i].r >> 3) & 0x1f;
+		uint16_t r = (rgb888[i].r >> 3) & 0x1f;
 		uint16_t g = ((rgb888[i].g >> 2) & 0x3f) << 5;
 		uint16_t b = ((rgb888[i].b >> 3) & 0x1f) << 11;
 
@@ -56,7 +61,7 @@ static void ConvertLineRGB888ToRGB565(const uint8_t* src, uint8_t *dst, uint32_t
  * param width	Width of the two images.
  * return 		void.
  */
-static void ConvertLineRGB565ToRGB888(const uint8_t* src, uint8_t *dst, uint32_t width)
+static void ConvertLineRGB565ToRGB888(const uint8_t *src, uint8_t *dst, uint32_t width)
 {
 	rgb565_t *rgb565 = (rgb565_t*)src;
 	rgb888_t *rgb888 = (rgb888_t*)dst;
@@ -82,7 +87,7 @@ static void ConvertLineRGB565ToRGB888(const uint8_t* src, uint8_t *dst, uint32_t
  * param width	Width of the two images.
  * return 		void.
  */
-static void ConvertLineRGB888ToRGB888(const uint8_t* src, uint8_t *dst, uint32_t width)
+static void ConvertLineRGB888ToRGB888(const uint8_t *src, uint8_t *dst, uint32_t width)
 {
 	rgb888_t *src888 = (rgb888_t*)src;
 	rgb888_t *dst888 = (rgb888_t*)dst;
@@ -102,22 +107,22 @@ static void ConvertLineRGB888ToRGB888(const uint8_t* src, uint8_t *dst, uint32_t
  * param width	Width of the two images.
  * return 		void.
  */
-static void ConvertLineGrayToRGB565(const uint8_t* src, uint8_t *dst, uint32_t width)
-{
-	uint8_t *gray = (uint8_t *)src;
-	rgb565_t *rgb565 = (rgb565_t*)dst;
-
-	for (uint32_t i = 0; i < width; i++) {
-		uint8_t val = *gray++;
-
-		rgb565_t b = ( val >> 3) & 0x1f;
-		rgb565_t g = ((val >> 2) & 0x3f) << 5;
-		rgb565_t r = b << 11;
-
-		*rgb565++ = (rgb565_t)(r | g | b);
-	}
-}
-
+// NOT USED.
+//static void ConvertLineGrayToRGB565(const uint8_t* src, uint8_t *dst, uint32_t width)
+//{
+//	uint8_t *gray = (uint8_t *)src;
+//	rgb565_t *rgb565 = (rgb565_t*)dst;
+//
+//	for (uint32_t i = 0; i < width; i++) {
+//		uint8_t val = *gray++;
+//
+//		rgb565_t b = ( val >> 3) & 0x1f;
+//		rgb565_t g = ((val >> 2) & 0x3f) << 5;
+//		rgb565_t r = b << 11;
+//
+//		*rgb565++ = (rgb565_t)(r | g | b);
+//	}
+//}
 
 /*
  * Converts a line of the source image pixels from Grayscale to Grayscale and stores the converted data to the destination.
@@ -127,7 +132,7 @@ static void ConvertLineGrayToRGB565(const uint8_t* src, uint8_t *dst, uint32_t w
  * param width	Width of the two images.
  * return 		void.
  */
-static void ConvertLineGrayToGray(const uint8_t* src, uint8_t *dst, uint32_t width)
+static void ConvertLineGrayToGray(const uint8_t *src, uint8_t *dst, uint32_t width)
 {
 	memcpy(dst, src, width);
 }
@@ -140,7 +145,7 @@ static void ConvertLineGrayToGray(const uint8_t* src, uint8_t *dst, uint32_t wid
  * fp		Pointer to the file object.
  * return	stm32ipl_err_Ok on success, error otherwise.
  */
-stm32ipl_err_t readJPEGSW(image_t *img, FIL* fp)
+stm32ipl_err_t readJPEGSW(image_t *img, FIL *fp)
 {
 	struct jpeg_error_mgr jerr;
 	struct jpeg_decompress_struct cinfo;
@@ -193,7 +198,7 @@ stm32ipl_err_t readJPEGSW(image_t *img, FIL* fp)
 		return stm32ipl_err_OutOfMemory;
 	}
 
-	imgData = xalloc(STM32Ipl_DataSize(cinfo.output_width, cinfo.output_height, bpp));
+	imgData = xalloc(STM32Ipl_DataSize(cinfo.output_width, cinfo.output_height, (image_bpp_t)bpp));
 	if (!imgData) {
 		xfree(auxLine);
 		jpeg_finish_decompress(&cinfo);
@@ -210,7 +215,7 @@ stm32ipl_err_t readJPEGSW(image_t *img, FIL* fp)
 		imgLine += cinfo.output_width * bpp;
 	}
 
-	STM32Ipl_Init(img, cinfo.output_width, cinfo.output_height, bpp, imgData);
+	STM32Ipl_Init(img, cinfo.output_width, cinfo.output_height, (image_bpp_t)bpp, imgData);
 
 	xfree(auxLine);
 
@@ -242,28 +247,28 @@ static stm32ipl_err_t encodeJPEG(const image_t *img, FIL *fp, uint32_t chromaSS,
 	jpeg_create_compress(&cinfo);
 	jpeg_stdio_dest(&cinfo, fp);
 
-	cinfo.image_width  = img->w;
+	cinfo.image_width = img->w;
 	cinfo.image_height = img->h;
 
 	switch (img->bpp) {
 		case IMAGE_BPP_RGB565:
 			convertFn = ConvertLineRGB565ToRGB888;
 			cinfo.input_components = 3;
-			cinfo.in_color_space   = JCS_RGB;
+			cinfo.in_color_space = JCS_RGB;
 			bpp = 2;
 			break;
 
 		case IMAGE_BPP_RGB888:
 			convertFn = ConvertLineRGB888ToRGB888;
 			cinfo.input_components = 3;
-			cinfo.in_color_space   = JCS_RGB;
+			cinfo.in_color_space = JCS_RGB;
 			bpp = 3;
 			break;
 
 		case IMAGE_BPP_GRAYSCALE:
 			convertFn = ConvertLineGrayToGray;
 			cinfo.input_components = 1;
-			cinfo.in_color_space   = JCS_GRAYSCALE;
+			cinfo.in_color_space = JCS_GRAYSCALE;
 			bpp = 1;
 			break;
 
@@ -283,21 +288,21 @@ static stm32ipl_err_t encodeJPEG(const image_t *img, FIL *fp, uint32_t chromaSS,
 			break;
 
 		case STM32IPL_JPEG_420_SUBSAMPLING:
-		     cinfo.comp_info[0].h_samp_factor = 2;
-		     cinfo.comp_info[0].v_samp_factor = 2;
-		     cinfo.comp_info[1].h_samp_factor = 1;
-		     cinfo.comp_info[1].v_samp_factor = 1;
-		     cinfo.comp_info[2].h_samp_factor = 1;
-		     cinfo.comp_info[2].v_samp_factor = 1;
+			cinfo.comp_info[0].h_samp_factor = 2;
+			cinfo.comp_info[0].v_samp_factor = 2;
+			cinfo.comp_info[1].h_samp_factor = 1;
+			cinfo.comp_info[1].v_samp_factor = 1;
+			cinfo.comp_info[2].h_samp_factor = 1;
+			cinfo.comp_info[2].v_samp_factor = 1;
 			break;
 
 		case STM32IPL_JPEG_422_SUBSAMPLING:
-	         cinfo.comp_info[0].h_samp_factor = 2;
-	         cinfo.comp_info[0].v_samp_factor = 1;
-	         cinfo.comp_info[1].h_samp_factor = 1;
-	         cinfo.comp_info[1].v_samp_factor = 1;
-	         cinfo.comp_info[2].h_samp_factor = 1;
-	         cinfo.comp_info[2].v_samp_factor = 1;
+			cinfo.comp_info[0].h_samp_factor = 2;
+			cinfo.comp_info[0].v_samp_factor = 1;
+			cinfo.comp_info[1].h_samp_factor = 1;
+			cinfo.comp_info[1].v_samp_factor = 1;
+			cinfo.comp_info[2].h_samp_factor = 1;
+			cinfo.comp_info[2].v_samp_factor = 1;
 			break;
 
 		default:
@@ -337,7 +342,6 @@ static stm32ipl_err_t encodeJPEG(const image_t *img, FIL *fp, uint32_t chromaSS,
 	return stm32ipl_err_Ok;
 }
 
-
 /* Encodes the given image to a JPEG file by using the libJPEG software encoder.
  * img		Image to be encoded (supported formats are: RGB565, Grayscale).
  * filename	Name of the output file.
@@ -364,4 +368,10 @@ stm32ipl_err_t saveJPEGSW(const image_t *img, const char *filename)
 	return res;
 }
 
-#endif /* STM32IPL_USE_HW_JPEG_CODEC */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* STM32IPL_ENABLE_HW_JPEG_CODEC */
+#endif /* STM32IPL_ENABLE_JPEG */
+#endif /* STM32IPL_ENABLE_IMAGE_IO */

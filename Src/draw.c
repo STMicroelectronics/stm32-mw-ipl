@@ -8,10 +8,10 @@
  *
  * Basic drawing functions.
  */
-#include "font.h"
+// STM32IPL	#include "font.h"
 #include "imlib.h"
-#include "unaligned_memcpy.h"
-// STM32IPL     #include "cmsis_gcc.h"
+// STM32IPL	#include "unaligned_memcpy.h"
+// STM32IPL	#include "cmsis_gcc.h"
 #include "cmsis_compiler.h"  // STM32IPL
 
 
@@ -328,6 +328,7 @@ void imlib_draw_ellipse(image_t *img, int cx, int cy, int rx, int ry, int rotati
     scratch_draw_rotated_ellipse(img, cx, cy, rx * 2, ry * 2, r, fill, c, thickness);
 }
 
+#ifndef STM32IPL
 // char rotation == 0, 90, 180, 360, etc.
 // string rotation == 0, 90, 180, 360, etc.
 void imlib_draw_string(image_t *img, int x_off, int y_off, const char *str, int c, float scale, int x_spacing, int y_spacing, bool mono_space,
@@ -351,8 +352,10 @@ void imlib_draw_string(image_t *img, int x_off, int y_off, const char *str, int 
     int org_y_off = y_off;
     const int anchor = x_off;
 
-    for(char ch, last = '\0'; (ch = *str); str++, last = ch) {
-
+    //for(char ch, last = '\0'; (ch = *str); str++, last = ch) {
+		for(char ch, last = '\0'; str++, last = ch;) {	// STM32IPL: assignment in condition removed.
+				ch = *str;	// STM32IPL: added.
+			
         if ((last == '\r') && (ch == '\n')) { // handle "\r\n" strings
             continue;
         }
@@ -4845,3 +4848,4 @@ void imlib_flood_fill(image_t *img, int x, int y,
     }
 }
 #endif // IMLIB_ENABLE_FLOOD_FILL
+#endif // STM32IPL

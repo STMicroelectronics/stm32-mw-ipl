@@ -8,8 +8,8 @@
  *
  * Statistics functions.
  */
-// STM32IPL #include "imlib.h"
-#include "stm32ipl.h" // STM32IPL
+
+#include "imlib.h"
 
 #ifdef IMLIB_ENABLE_GET_SIMILARITY
 typedef struct imlib_similatiry_line_op_state {
@@ -84,8 +84,14 @@ void imlib_similarity_line_op(image_t *img, int line, void *other, void *data, b
             rgb888_t *other_row_ptr = (rgb888_t *) other;
             for (int x = 0, xx = (img->w + 7) / 8; x < xx; x++) {
                 for (int i = 0, ii = IM_MIN((img->w - (x * 8)), 8); i < ii; i++) {
-                    int pixel = COLOR_RGB888_TO_L(IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x + i));
-                    int other_pixel = COLOR_RGB888_TO_L(IMAGE_GET_RGB888_PIXEL_FAST(other_row_ptr, x + i));
+									// STM32IPL: changed to solve compiler error. int pixel = COLOR_RGB888_TO_L(IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x + i));
+									rgb888_t pixel888 = IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x + i);	// STM32IPL
+									int pixel = COLOR_RGB888_TO_L(pixel888);	// STM32IPL
+									
+                  // STM32IPL: changed to solve compiler error. int other_pixel = COLOR_RGB888_TO_L(IMAGE_GET_RGB888_PIXEL_FAST(other_row_ptr, x + i));
+									rgb888_t otherPixel888 = IMAGE_GET_RGB888_PIXEL_FAST(other_row_ptr, x + i);	// STM32IPL
+									int other_pixel = COLOR_RGB888_TO_L(otherPixel888);	// STM32IPL
+									
                     state->sumBucketsOfX[x] += pixel;
                     state->sumBucketsOfY[x] += other_pixel;
                     state->sum2BucketsOfX[x] += pixel * pixel;
@@ -437,7 +443,8 @@ void imlib_get_histogram(histogram_t *out, image_t *ptr, rectangle_t *roi, list_
                     for (int y = roi->y, yy = roi->y + roi->h; y < yy; y++) {
                     	rgb888_t *row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y), *other_row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(other, y);
                         for (int x = roi->x, xx = roi->x + roi->w; x < xx; x++) {
-                            rgb888_t pixel888 = IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x), other_pixel888 = IMAGE_GET_RGB888_PIXEL_FAST(other_row_ptr, x);
+                            rgb888_t pixel888 = IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x);
+														rgb888_t other_pixel888 = IMAGE_GET_RGB888_PIXEL_FAST(other_row_ptr, x);
                             int r = abs(pixel888.r - other_pixel888.r);
                             int g = abs(pixel888.g - other_pixel888.g);
                             int b = abs(pixel888.b - other_pixel888.b);
@@ -595,7 +602,6 @@ void imlib_get_percentile(percentile_t *out, image_bpp_t bpp, histogram_t *ptr, 
             }
             break;
         }
-
         case IMAGE_BPP_RGB888: { // STM32IPL
             {
                 float mult = (COLOR_L_MAX - COLOR_L_MIN) / ((float) (ptr->LBinCount - 1));
@@ -1237,6 +1243,28 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
                     }
                     break;
                 }
+                case IMAGE_BPP_RGB888: { //STM32IPL
+                    for (int y = roi->y, yy = roi->y + roi->h; y < yy; y += y_stride) {
+                        rgb888_t *row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y);
+                        for (int x = roi->x + (y % x_stride), xx = roi->x + roi->w; x < xx; x += x_stride) {
+                        	// STM32IPL: changed to avoid compiler errors. if (COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert)) {
+                        	rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x);	//STM32IPL
+                            if (COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert)) {		//STM32IPL
+                                blob_x1 = IM_MIN(blob_x1, x);
+                                blob_y1 = IM_MIN(blob_y1, y);
+                                blob_x2 = IM_MAX(blob_x2, x);
+                                blob_y2 = IM_MAX(blob_y2, y);
+                                blob_pixels += 1;
+                                blob_cx += x;
+                                blob_cy += y;
+                                blob_a += x*x;
+                                blob_b += x*y;
+                                blob_c += y*y;
+                            }
+                        }
+                    }
+                    break;
+                }
                 default: {
                     break;
                 }
@@ -1245,6 +1273,7 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
 
         int w = blob_x2 - blob_x1;
         int h = blob_y2 - blob_y1;
+
         if (blob_pixels && ((w * h) >= area_threshold) && (blob_pixels >= pixels_threshold)) {
             // http://www.cse.usf.edu/~r1k/MachineVisionBook/MachineVision.files/MachineVision_Chapter2.pdf
             // https://www.strchr.com/standard_deviation_in_one_pass
@@ -1268,8 +1297,10 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
 
             float rotation = ((small_blob_a != small_blob_c) ? (fast_atan2f(2 * small_blob_b, small_blob_a - small_blob_c) / 2.0f) : 1.570796f) + 1.570796f; // PI/2
 
-            out->theta = fast_roundf(rotation * 57.295780) % 180; // * (180 / PI)
-            if (out->theta < 0) out->theta += 180;
+			out->theta = fast_roundf(rotation * 57.295780f) % 180; // * (180 / PI)		// STM32IPL: f added to the constant.
+            if (out->theta < 0)
+            	out->theta += 180;
+
             out->rho = fast_roundf(((mx - roi->x) * cos_table[out->theta]) + ((my - roi->y) * sin_table[out->theta]));
 
             float part0 = (small_blob_a + small_blob_c) / 2.0f;
@@ -1280,6 +1311,7 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
             float p_sub = fast_sqrtf(part0 - part1);
             float e_min = IM_MIN(p_add, p_sub);
             float e_max = IM_MAX(p_add, p_sub);
+
             out->magnitude = fast_roundf(e_max / e_min) - 1; // Circle -> [0, INF) -> Line
 
             if ((45 <= out->theta) && (out->theta < 135)) {
@@ -1320,7 +1352,7 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
         size_t points_max = size / sizeof(point_t);
         size_t points_count = 0;
 
-        if(points_max) {
+        if (points_max) {
             int blob_x1 = roi->x + roi->w - 1;
             int blob_y1 = roi->y + roi->h - 1;
             int blob_x2 = roi->x;
@@ -1398,6 +1430,32 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
                         }
                         break;
                     }
+
+                    case IMAGE_BPP_RGB888: { //STM32IPL
+                        for (int y = roi->y, yy = roi->y + roi->h; y < yy; y += y_stride) {
+                            rgb888_t *row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(ptr, y);
+                            for (int x = roi->x + (y % x_stride), xx = roi->x + roi->w; x < xx; x += x_stride) {
+                            	// STM32IPL: changed to avoid compiler errors. if (COLOR_THRESHOLD_RGB888(IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x), &lnk_data, invert)) {
+                            	rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(row_ptr, x);	// STM32IPL
+                            	if (COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert)) {	// STM32IPL
+                                    blob_x1 = IM_MIN(blob_x1, x);
+                                    blob_y1 = IM_MIN(blob_y1, y);
+                                    blob_x2 = IM_MAX(blob_x2, x);
+                                    blob_y2 = IM_MAX(blob_y2, y);
+                                    blob_pixels += 1;
+                                    x_histogram[x]++;
+                                    y_histogram[y]++;
+
+                                    if(points_count < points_max) {
+                                        point_init(&points[points_count], x, y);
+                                        points_count += 1;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+
                     default: {
                         break;
                     }
@@ -1429,7 +1487,7 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
 
                     float rotation = (mdx ? fast_atan2f(mdy, mdx) : 1.570796f) + 1.570796f; // PI/2
 
-                    out->theta = fast_roundf(rotation * 57.295780) % 180; // * (180 / PI)
+                    out->theta = fast_roundf(rotation * 57.295780f) % 180; // * (180 / PI)	// STM32IPL: f added to the constant.
                     if (out->theta < 0) out->theta += 180;
                     out->rho = fast_roundf(((mx - roi->x) * cos_table[out->theta]) + ((my - roi->y) * sin_table[out->theta]));
 
@@ -1475,202 +1533,188 @@ bool imlib_get_regression(find_lines_list_lnk_data_t *out, image_t *ptr, rectang
 }
 
 /**
- * @brief Computes a linear regression using points.
+ * brief This function is part of STM32IPL. Computes a linear regression using points.
  * The linear regression is computed using least-squares normally which is fast but cannot handle any outliers.
  * If robust is True then the Theil-Sen linear regression is used instead which computes the median of all slopes between all thresholded pixels in the image
- * @param out		output and contains find_lines_list_lnk_data with the line points, magnitude.
- * @param points	points used in the regression
- * @param nPoints	number of first points used to find line with the regression
- * @param robust	is True then the Theil-Sen linear regression is used instead which computes the median of all slopes between all thresholded pixels in the image.
- * @return	stm32ipl_err_Ok on success, error otherwise
+ * param out		output and contains find_lines_list_lnk_data with the line points, magnitude.
+ * param points	points used in the regression
+ * param nPoints	number of first points used to find line with the regression
+ * param robust	is True then the Theil-Sen linear regression is used instead which computes the median of all slopes between all thresholded pixels in the image.
+ * return	stm32ipl_err_Ok on success, error otherwise
  */
-stm32ipl_err_t STM32Ipl_GetRegressionPoints(find_lines_list_lnk_data_t *out, const point_t *points, uint16_t nPoints, bool robust)
+bool stm32ipl_get_regression_points(const point_t *points, uint16_t nPoints, find_lines_list_lnk_data_t *out, bool robust)
 {
-	if (!out || !points )
-		return stm32ipl_err_InvalidParameter;
+	bool res;
+    uint32_t maxX;
+    uint32_t maxY;
+    uint32_t minX;
+    uint32_t minY;
 
-	bool res = false;
+	if (!out || !points)
+		return false;
 
-	// FIXME: da sistemare
+	res = false;
 
-
-//    bool result = false;
     memset(out, 0, sizeof(find_lines_list_lnk_data_t));
-    uint32_t max_x = 0;
-    uint32_t max_y = 0;
-    uint32_t min_x = 0;
-    uint32_t min_y = 0;
+    maxX = 0;
+    maxY = 0;
+    minX = 0;
+    minY = 0;
 
     if (!robust) { // Least Squares
-        int blob_pixels = 0;
-        int blob_cx = 0;
-        int blob_cy = 0;
-        long long blob_a = 0;
-        long long blob_b = 0;
-        long long blob_c = 0;
+        int blobPixels = 0;
+        int blobCx = 0;
+        int blobCy = 0;
+        long long blobA = 0;
+        long long blobB = 0;
+        long long blobC = 0;
+        int mx, my, smallBlobA, smallBlobB, smallBlobC;
+        float rotation, part0, fAC, part1, pAdd, pSub, eMin, eMax;
 
         for (int i = 0; i< nPoints; i++) {
-            blob_pixels += 1;
-            blob_cx += points[i].x;
-            blob_cy += points[i].y;
-            blob_a += points[i].x*points[i].x;
-            blob_b += points[i].x*points[i].y;
-            blob_c += points[i].y*points[i].y;
-            max_x = IM_MAX(max_x,points[i].x);
-            max_y = IM_MAX(max_y,points[i].y);
-            min_x = IM_MIN(min_x,points[i].x);
-            min_y = IM_MIN(min_y,points[i].y);
+            blobPixels += 1;
+            blobCx += points[i].x;
+            blobCy += points[i].y;
+            blobA += points[i].x*points[i].x;
+            blobB += points[i].x*points[i].y;
+            blobC += points[i].y*points[i].y;
+            maxX = IM_MAX(maxX,points[i].x);
+            maxY = IM_MAX(maxY,points[i].y);
+            minX = IM_MIN(minX,points[i].x);
+            minY = IM_MIN(minY,points[i].y);
         }
 
-		// http://www.cse.usf.edu/~r1k/MachineVisionBook/MachineVision.files/MachineVision_Chapter2.pdf
-		// https://www.strchr.com/standard_deviation_in_one_pass
-		//
-		// a = sigma(x*x) + (mx*sigma(x)) + (mx*sigma(x)) + (sigma()*mx*mx)
-		// b = sigma(x*y) + (mx*sigma(y)) + (my*sigma(x)) + (sigma()*mx*my)
-		// c = sigma(y*y) + (my*sigma(y)) + (my*sigma(y)) + (sigma()*my*my)
-		//
-		// blob_a = sigma(x*x)
-		// blob_b = sigma(x*y)
-		// blob_c = sigma(y*y)
-		// blob_cx = sigma(x)
-		// blob_cy = sigma(y)
-		// blob_pixels = sigma()
 
-		int mx = blob_cx / blob_pixels; // x centroid
-		int my = blob_cy / blob_pixels; // y centroid
-		int small_blob_a = blob_a - ((mx * blob_cx) + (mx * blob_cx)) + (blob_pixels * mx * mx);
-		int small_blob_b = blob_b - ((mx * blob_cy) + (my * blob_cx)) + (blob_pixels * mx * my);
-		int small_blob_c = blob_c - ((my * blob_cy) + (my * blob_cy)) + (blob_pixels * my * my);
+		mx = blobCx / blobPixels; // x centroid
+		my = blobCy / blobPixels; // y centroid
+		smallBlobA = blobA - ((mx * blobCx) + (mx * blobCx)) + (blobPixels * mx * mx);
+		smallBlobB = blobB - ((mx * blobCy) + (my * blobCx)) + (blobPixels * mx * my);
+		smallBlobC = blobC - ((my * blobCy) + (my * blobCy)) + (blobPixels * my * my);
 
-		float rotation = ((small_blob_a != small_blob_c) ? (fast_atan2f(2 * small_blob_b, small_blob_a - small_blob_c) / 2.0f) : 1.570796f) + 1.570796f; // PI/2
+		rotation = ((smallBlobA != smallBlobC) ? (fast_atan2f(2 * smallBlobB, smallBlobA - smallBlobC) / 2.0f) : 1.570796f) + 1.570796f; // PI/2
 
-		out->theta = fast_roundf(rotation * 57.295780) % 180; // * (180 / PI)
+		out->theta = fast_roundf(rotation * 57.295780f) % 180; // * (180 / PI)	// STM32IPL: f added to the constant.
 		if (out->theta < 0) out->theta += 180;
-		//out->rho = fast_roundf(((mx) * cos_table[out->theta]) + ((my) * sin_table[out->theta]));
-		out->rho = fast_roundf(((mx - min_x) * cos_table[out->theta]) + ((my - min_y) * sin_table[out->theta]));
 
-		float part0 = (small_blob_a + small_blob_c) / 2.0f;
-		float f_b = (float) small_blob_b;
-		float f_a_c = (float) (small_blob_a - small_blob_c);
-		float part1 = fast_sqrtf((4 * f_b * f_b) + (f_a_c * f_a_c)) / 2.0f;
-		float p_add = fast_sqrtf(part0 + part1);
-		float p_sub = fast_sqrtf(part0 - part1);
-		float e_min = IM_MIN(p_add, p_sub);
-		float e_max = IM_MAX(p_add, p_sub);
-		out->magnitude = fast_roundf(e_max / e_min) - 1; // Circle -> [0, INF) -> Line
+		out->rho = fast_roundf(((mx - minX) * cos_table[out->theta]) + ((my - minY) * sin_table[out->theta]));
+
+		part0 = (smallBlobA + smallBlobC) / 2.0f;
+		fAC = (float)(smallBlobA - smallBlobC);
+		part1 = fast_sqrtf((4 * smallBlobB * smallBlobB) + (fAC * fAC)) / 2.0f;
+		pAdd = fast_sqrtf(part0 + part1);
+		pSub = fast_sqrtf(part0 - part1);
+		eMin = IM_MIN(pAdd, pSub);
+		eMax = IM_MAX(pAdd, pSub);
+		out->magnitude = fast_roundf(eMax / eMin) - 1; // Circle -> [0, INF) -> Line
 
 		if ((45 <= out->theta) && (out->theta < 135)) {
-			// y = (r - x cos(t)) / sin(t)
 			out->line.x1 = 0;
 			out->line.y1 = fast_roundf((out->rho - (out->line.x1 * cos_table[out->theta])) / sin_table[out->theta]);
-			out->line.x2 = max_x - 1;
+			out->line.x2 = maxX - 1;
 			out->line.y2 = fast_roundf((out->rho - (out->line.x2 * cos_table[out->theta])) / sin_table[out->theta]);
 		} else {
-			// x = (r - y sin(t)) / cos(t);
 			out->line.y1 = 0;
 			out->line.x1 = fast_roundf((out->rho - (out->line.y1 * sin_table[out->theta])) / cos_table[out->theta]);
-			out->line.y2 = max_y - 1;
+			out->line.y2 = maxY - 1;
 			out->line.x2 = fast_roundf((out->rho - (out->line.y2 * sin_table[out->theta])) / cos_table[out->theta]);
 		}
 
-		if(lb_clip_line(&out->line, min_x, min_y, max_x, max_y)) {
+		if (lb_clip_line(&out->line, minX, minY, maxX, maxY)) {
 			out->line.x1 += 0;
 			out->line.y1 += 0;
 			out->line.x2 += 0;
 			out->line.y2 += 0;
 			// Move rho too.
-			//out->rho += fast_roundf((cos_table[out->theta]) + (sin_table[out->theta]));
-			out->rho += fast_roundf((min_x * cos_table[out->theta]) + (min_y * sin_table[out->theta]));
+			out->rho += fast_roundf((minX * cos_table[out->theta]) + (minY * sin_table[out->theta]));
 			res = true;
 		} else {
 			memset(out, 0, sizeof(find_lines_list_lnk_data_t));
 		}
     } else { // Theil-Sen Estimator
+    	int *xHistogram, *yHistogram;
+    	long long *xDeltaHistogram, *yDeltaHistogram;
+    	size_t pointsMax;
+    	size_t pointsCount;
 
-        for (int i = 0; i< nPoints; i++){
-
-        	max_x = IM_MAX(max_x,points[i].x);
-            max_y = IM_MAX(max_y,points[i].y);
-            min_x = IM_MIN(min_x,points[i].x);
-            min_y = IM_MIN(min_y,points[i].y);
+        for (int i = 0; i< nPoints; i++) {
+        	maxX = IM_MAX(maxX,points[i].x);
+            maxY = IM_MAX(maxY,points[i].y);
+            minX = IM_MIN(minX,points[i].x);
+            minY = IM_MIN(minY,points[i].y);
         }
 
-        int *x_histogram = fb_alloc0(max_x * sizeof(int), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
-        int *y_histogram = fb_alloc0(max_y * sizeof(int), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
+        xHistogram = fb_alloc0(maxX * sizeof(int), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
+        yHistogram = fb_alloc0(maxY * sizeof(int), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
 
-        long long *x_delta_histogram = fb_alloc0((2 * max_x) * sizeof(long long), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
-        long long *y_delta_histogram = fb_alloc0((2 * max_y) * sizeof(long long), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
+        xDeltaHistogram = fb_alloc0((2 * maxX) * sizeof(long long), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
+        yDeltaHistogram = fb_alloc0((2 * maxY) * sizeof(long long), FB_ALLOC_NO_HINT); // Not roi so we don't have to adjust, we can burn the RAM.
 
-        uint32_t size = nPoints*sizeof(point_t);
-        point_t *points = (point_t *) fb_alloc(size, FB_ALLOC_NO_HINT);
+        pointsMax = nPoints;
+        pointsCount = 0;
 
-        size_t points_max = size / sizeof(point_t);
-        size_t points_count = 0;
+        if (pointsMax) {
+            int blobPixels = 0;
+            long long delta_sum;
 
-        if(points_max) {
-            int blob_pixels = 0;
+            for (int i = 0; i< nPoints; i++) {
+                blobPixels += 1;
+                xHistogram[points[i].x]++;
+                yHistogram[points[i].y]++;
 
-            for (int i = 0; i< nPoints; i++){
-                blob_pixels += 1;
-                x_histogram[points[i].x]++;
-                y_histogram[points[i].y]++;
-
-                if(points_count < points_max) {
-                    point_init(&points[points_count], points[i].x, points[i].y);
-                    points_count += 1;
+                if (pointsCount < pointsMax) {
+                    pointsCount += 1;
                 }
-
             }
 
-			long long delta_sum = (points_count * (points_count - 1)) / 2;
+			delta_sum = (pointsCount * (pointsCount - 1)) / 2;
 
 			if (delta_sum) {
 				// The code below computes the average slope between all pairs of points.
 				// This is a N^2 operation that can easily blow up if the image is not threshold carefully...
+				int mx, my, mdx, mdy;
+				float rotation;
 
-				for(int i = 0; i < points_count; i++) {
-					point_t *p0 = &points[i];
-					for(int j = i + 1; j < points_count; j++) {
-						point_t *p1 = &points[j];
-						x_delta_histogram[p0->x - p1->x + max_x]++; // Note we allocated 1 extra above so we can do points->w instead of (points->w-1).
-						y_delta_histogram[p0->y - p1->y + max_y]++; // Note we allocated 1 extra above so we can do points->h instead of (points->h-1).
+				for(int i = 0; i < pointsCount; i++) {
+					point_t *p0 = (point_t *)&points[i];
+					for(int j = i + 1; j < pointsCount; j++) {
+						point_t *p1 = (point_t *)&points[j];
+						xDeltaHistogram[p0->x - p1->x + maxX]++; // Note we allocated 1 extra above so we can do points->w instead of (points->w-1).
+						yDeltaHistogram[p0->y - p1->y + maxY]++; // Note we allocated 1 extra above so we can do points->h instead of (points->h-1).
 					}
 				}
 
-				int mx = get_median(x_histogram, blob_pixels, max_x); // Output doesn't need adjustment.
-				int my = get_median(y_histogram, blob_pixels, max_y); // Output doesn't need adjustment.
-				int mdx = get_median_l(x_delta_histogram, delta_sum, 2 * max_x) - max_x; // Fix offset.
-				int mdy = get_median_l(y_delta_histogram, delta_sum, 2 * max_y) - max_y; // Fix offset.
+				mx = get_median(xHistogram, blobPixels, maxX); // Output doesn't need adjustment.
+				my = get_median(yHistogram, blobPixels, maxY); // Output doesn't need adjustment.
+				mdx = get_median_l(xDeltaHistogram, delta_sum, 2 * maxX) - maxX; // Fix offset.
+				mdy = get_median_l(yDeltaHistogram, delta_sum, 2 * maxY) - maxY; // Fix offset.
 
-				float rotation = (mdx ? fast_atan2f(mdy, mdx) : 1.570796f) + 1.570796f; // PI/2
+				rotation = (mdx ? fast_atan2f(mdy, mdx) : 1.570796f) + 1.570796f; // PI/2
 
-				out->theta = fast_roundf(rotation * 57.295780) % 180; // * (180 / PI)
+				out->theta = fast_roundf(rotation * 57.295780f) % 180; // * (180 / PI)	// STM32IPL: f added to the constant.
 				if (out->theta < 0) out->theta += 180;
-				out->rho = fast_roundf(((mx - min_x) * cos_table[out->theta]) + ((my - min_y) * sin_table[out->theta]));
+				out->rho = fast_roundf(((mx - minX) * cos_table[out->theta]) + ((my - minY) * sin_table[out->theta]));
 
 				out->magnitude = fast_roundf(fast_sqrtf((mdx * mdx) + (mdy * mdy)));
 
 				if ((45 <= out->theta) && (out->theta < 135)) {
-					// y = (r - x cos(t)) / sin(t)
 					out->line.x1 = 0;
 					out->line.y1 = fast_roundf((out->rho - (out->line.x1 * cos_table[out->theta])) / sin_table[out->theta]);
-					out->line.x2 = max_x;
+					out->line.x2 = maxX;
 					out->line.y2 = fast_roundf((out->rho - (out->line.x2 * cos_table[out->theta])) / sin_table[out->theta]);
 				} else {
-					// x = (r - y sin(t)) / cos(t);
 					out->line.y1 = 0;
 					out->line.x1 = fast_roundf((out->rho - (out->line.y1 * sin_table[out->theta])) / cos_table[out->theta]);
-					out->line.y2 = max_y;
+					out->line.y2 = maxY;
 					out->line.x2 = fast_roundf((out->rho - (out->line.y2 * sin_table[out->theta])) / cos_table[out->theta]);
 				}
 
-				if(lb_clip_line(&out->line, min_x, min_y, max_x, max_y)) {
+				if (lb_clip_line(&out->line, minX, minY, maxX, maxY)) {
 					out->line.x1 += 0;
 					out->line.y1 += 0;
 					out->line.x2 += 0;
 					out->line.y2 += 0;
 					// Move rho too.
-					out->rho += fast_roundf((min_x * cos_table[out->theta]) + (min_y * sin_table[out->theta]));
+					out->rho += fast_roundf((minX * cos_table[out->theta]) + (minY * sin_table[out->theta]));
 					res = true;
 				} else {
 					memset(out, 0, sizeof(find_lines_list_lnk_data_t));
@@ -1678,12 +1722,11 @@ stm32ipl_err_t STM32Ipl_GetRegressionPoints(find_lines_list_lnk_data_t *out, con
 			}
         }
 
-        fb_free(); // points
-        fb_free(); // y_delta_histogram
-        fb_free(); // x_delta_histogram
-        fb_free(); // y_histogram
-        fb_free(); // x_histogram
+        fb_free(); // yDeltaHistogram
+        fb_free(); // xDeltaHistogram
+        fb_free(); // yHistogram
+        fb_free(); // xHistogram
     }
 
-    return res ? stm32ipl_err_Ok : stm32ipl_err_OpNotCompleted;
+    return res;
 }

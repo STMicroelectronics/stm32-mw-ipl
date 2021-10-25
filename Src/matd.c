@@ -6,24 +6,23 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
- * All rights reserved.</center></h2>
+ * Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.
  *
- * Portions of this file is part of the OpenMV project.
+ * Portions of this file are part of the OpenMV project.
  *
  * Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
  * Copyright (c) 2013-2019 Kwabena W. Agyeman <kwagyeman@openmv.io>
  *
- * This software component is licensed under MIT License, the "License";
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at:
- *                        opensource.org/licenses/MIT
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
  *
  ******************************************************************************
  */
 
 /* This file has been created for STM32IPL and contains code moved here from
- * apriltag.c.
+ * apriltag.c file.
  */
 
 #include "matd.h"
@@ -725,7 +724,7 @@ matd_t* matd_inverse(const matd_t *x)
 		if (x->data[0] == 0)
 			return NULL;
 
-		return matd_create_scalar(1.0 / x->data[0]);
+		return matd_create_scalar(1.0f / x->data[0]);	// STM32IPL: added f to the constant.
 	}
 
 	switch (x->nrows) {
@@ -734,10 +733,10 @@ matd_t* matd_inverse(const matd_t *x)
 			if (det == 0)
 				return NULL;
 
-			float invdet = 1.0 / det;
+			float invdet = 1.0f / det;	// STM32IPL: added f to the constant.
 
 			m = matd_create(x->nrows, x->nrows);
-			MATD_EL(m, 0, 0)= 1.0 * invdet;
+			MATD_EL(m, 0, 0)= 1.0f * invdet;	// STM32IPL: added f to the constant.
 			return m;
 		}
 
@@ -746,7 +745,7 @@ matd_t* matd_inverse(const matd_t *x)
 			if (det == 0)
 				return NULL;
 
-			float invdet = 1.0 / det;
+			float invdet = 1.0f / det;	// STM32IPL: added f to the constant.
 
 			m = matd_create(x->nrows, x->nrows);
 			MATD_EL(m, 0, 0)= MATD_EL(x, 1, 1) * invdet;
@@ -1201,6 +1200,7 @@ TYPE matd_err_inf(const matd_t *a, const matd_t *b)
 }
 
 // STM32IPL: function modified to solve VLA problems.
+
 // Computes an SVD for square or tall matrices. This code doesn't work
 // for wide matrices, because the bidiagonalization results in one
 // non-zero element too far to the right for us to rotate away.
@@ -1843,7 +1843,7 @@ matd_plu_t* matd_plu(const matd_t *a)
 		}
 
 		if (j < lu->ncols && j < lu->nrows && LUjj != 0) {
-			LUjj = 1.0 / LUjj;
+			LUjj = 1.0f / LUjj;	// STM32IPL: added f to the constant.
 			for (int i = j+1; i < lu->nrows; i++)
 			MATD_EL(lu, i, j) *= LUjj;
 		}
@@ -1943,7 +1943,7 @@ matd_t* matd_plu_solve(const matd_plu_t *mlu, const matd_t *b)
 
 		// solve Ux = y
 	for (int k = mlu->lu->ncols - 1; k >= 0; k--) {
-		float LUkk = 1.0 / MATD_EL(mlu->lu, k, k);
+		float LUkk = 1.0f / MATD_EL(mlu->lu, k, k);	// STM32IPL: added f to the constant.
 		for (int t = 0; t < b->ncols; t++)
 			MATD_EL(x, k, t)*= LUkk;
 
@@ -2140,7 +2140,7 @@ matd_chol_t* matd_chol(matd_t *A)
 
 		if (d < MATD_EPS)
 			d = MATD_EPS;
-		d = 1.0 / sqrt(d);
+		d = 1.0f / sqrt(d);	// STM32IPL: added f to the constant.
 
 		for (int j = i; j < N; j++)
 			MATD_EL(U, i, j)*= d;
@@ -2241,7 +2241,7 @@ matd_t* matd_chol_solve(const matd_chol_t *chol, const matd_t *b)
 
 	// solve Ux = y
 	for (int k = u->ncols - 1; k >= 0; k--) {
-		float LUkk = 1.0 / MATD_EL(u, k, k);
+		float LUkk = 1.0f / MATD_EL(u, k, k);	// STM32IPL: added f to the constant.
 		for (int t = 0; t < b->ncols; t++)
 			MATD_EL(x, k, t)*= LUkk;
 

@@ -6,30 +6,35 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
- * All rights reserved.</center></h2>
+ * Copyright (c) 2021 STMicroelectronics.
+ * All rights reserved.
  *
- * This software component is licensed by ST under Ultimate Liberty license
- * SLA0044, the "License"; You may not use this file except in compliance with
- * the License. You may obtain a copy of the License at:
- *                             www.st.com/SLA0044
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
  *
  ******************************************************************************
  */
 
-#include <stdio.h>
-#include "stm32ipl_image_io.h"
-#include "stm32ipl_conf.h"
+#include "stm32ipl.h"
+#include "stm32ipl_imlib_int.h"
 
 #ifdef STM32IPL_ENABLE_IMAGE_IO
-
-#ifdef STM32IPL_USE_HW_JPEG_CODEC
+#ifdef STM32IPL_ENABLE_JPEG
+#ifdef STM32IPL_ENABLE_HW_JPEG_CODEC
 #include "stm32ipl_image_io_jpg_hw.h"
-#else
+#else /* STM32IPL_ENABLE_HW_JPEG_CODEC */
 #include "stm32ipl_image_io_jpg_sw.h"
-#endif
+#endif /* STM32IPL_ENABLE_HW_JPEG_CODEC */
+#endif /* STM32IPL_ENABLE_JPEG */
 
+#include <stdio.h>
 #include <ctype.h>
+#include "ff.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define BI_RGB              0
 #define BI_RLE8             1
@@ -44,15 +49,14 @@
 #define RGB565_GREEN_MASK   0x07E0
 #define RGB565_BLUE_MASK    0x001F
 
-typedef enum _ImageFileFormatType {
-	iplFileFormatUnknown,
-	iplFileFormatBMP,
+typedef enum _ImageFileFormatType
+{
+	iplFileFormatUnknown, iplFileFormatBMP,
 	// TODO: iplFileFormatPBM. Not supported.
 	iplFileFormatPPM,
 	iplFileFormatPGM,
 	iplFileFormatJPG,
 } ImageFileFormatType;
-
 
 /* Returns the image file format by analyzing the file extension.
  * BMP, PPM, PGM, JPEG formats are supported.
@@ -139,14 +143,14 @@ static bool grayscalePalette(uint32_t *palette, uint32_t colorUsed)
  */
 static stm32ipl_err_t readBmp(image_t *img, FIL *fp)
 {
-	uint32_t dataOffset;		/* The offset, in bytes, from the beginning of the file to the image pixels. */
-	uint32_t infoHeaderSize;	/* The number of bytes of the header. */
-	int32_t width;				/* The width of the bitmap, in pixels. */
-	int32_t height;				/* The height of the bitmap, in pixels. */
-	uint16_t bitCount;			/* The number of bits per pixel (bpp). */
-	uint32_t compression;		/* The type of compression used. */
-	uint32_t colorUsed;			/* The number of colors used. */
-	uint32_t lineSize;			/* The size of a bitmap line (in bytes). */
+	uint32_t dataOffset; /* The offset, in bytes, from the beginning of the file to the image pixels. */
+	uint32_t infoHeaderSize; /* The number of bytes of the header. */
+	int32_t width; /* The width of the bitmap, in pixels. */
+	int32_t height; /* The height of the bitmap, in pixels. */
+	uint16_t bitCount; /* The number of bits per pixel (bpp). */
+	uint32_t compression; /* The type of compression used. */
+	uint32_t colorUsed; /* The number of colors used. */
+	uint32_t lineSize; /* The size of a bitmap line (in bytes). */
 	uint8_t header[54];
 	uint8_t *pHeader;
 	uint32_t bytesRead;
@@ -179,10 +183,10 @@ static stm32ipl_err_t readBmp(image_t *img, FIL *fp)
 	/* Read the size of the info header. */
 	infoHeaderSize = pHeader[14] + (pHeader[15] << 8) + (pHeader[16] << 16) + (pHeader[17] << 24);
 	if ((infoHeaderSize != 40) /* BITMAPINFOHEADER */
-			&& (infoHeaderSize != 52) /* BITMAPV2INFOHEADER */
-			&& (infoHeaderSize != 56) /* BITMAPV3INFOHEADER */
-			&& (infoHeaderSize != 108) /* BITMAPV4HEADER */
-			&& (infoHeaderSize != 124)) /* BITMAPV5HEADER */
+	&& (infoHeaderSize != 52) /* BITMAPV2INFOHEADER */
+	&& (infoHeaderSize != 56) /* BITMAPV3INFOHEADER */
+	&& (infoHeaderSize != 108) /* BITMAPV4HEADER */
+	&& (infoHeaderSize != 124)) /* BITMAPV5HEADER */
 		return stm32ipl_err_UnsupportedFormat;
 
 	/* Read the bitmap width. */
@@ -655,8 +659,8 @@ static stm32ipl_err_t readBmp(image_t *img, FIL *fp)
 				for (uint32_t j = 0; j < width; j++) {
 					uint16_t value = *inPixel;
 
-					if (compression && (rMask == RGB565_RED_MASK) &&
-							(gMask == RGB565_GREEN_MASK) && (bMask == RGB565_BLUE_MASK))
+					if (compression && (rMask == RGB565_RED_MASK) && (gMask == RGB565_GREEN_MASK)
+							&& (bMask == RGB565_BLUE_MASK))
 						/* RGB565 case. */
 						*outPixel++ = value;
 					else
@@ -782,7 +786,8 @@ static stm32ipl_err_t readPnm(image_t *img, FIL *fp)
 	bool valid = false;
 	uint8_t *outData;
 
-	enum {
+	enum
+	{
 		EAT_WHITESPACE, EAT_COMMENT, EAT_NUMBER
 	} mode = EAT_WHITESPACE;
 
@@ -1080,6 +1085,7 @@ static stm32ipl_err_t readPnm(image_t *img, FIL *fp)
 	return stm32ipl_err_Ok;
 }
 
+#ifdef STM32IPL_ENABLE_JPEG
 /* Reads JPEG image file; the generated image will be Grayscale or RGB565 depending on the actual
  * image content; depending on the configuration file (stm32ipl_conf.h) the SW or the HW JPEG
  * decoder will be used.
@@ -1090,12 +1096,13 @@ static stm32ipl_err_t readPnm(image_t *img, FIL *fp)
  */
 static stm32ipl_err_t readJpg(image_t *img, FIL *fp)
 {
-#ifdef STM32IPL_USE_HW_JPEG_CODEC
+#ifdef STM32IPL_ENABLE_HW_JPEG_CODEC
 	return readJPEGHW(img, fp);
 #else
 	return readJPEGSW(img, fp);
 #endif
 }
+#endif /* STM32IPL_ENABLE_JPEG */
 
 /**
  * @brief Reads image file; supported file formats are: BMP, PPM, PGM, JPG.
@@ -1111,8 +1118,8 @@ static stm32ipl_err_t readJpg(image_t *img, FIL *fp)
  * - PGM: the generated image will be Grayscale.
  * - JPEG: the generated image will be Grayscale or RGB565, depending on the actual image content.
  * Depending on the configuration file (stm32ipl_conf.h) the SW or the HW JPEG decoder will be used.
- * @param img		Image read; the pixel data is allocated internally and must be released
- * with STM32Ipl_ReleaseData(); assuming that input img->data is null.
+ * @param img		Image: if it is not valid, an error is returned; the given img->data is considered null.
+ * The pixel data buffer is allocated internally and must be released with STM32Ipl_ReleaseData() by the caller.
  * @param filename	Name of the input file.
  * @return			stm32ipl_err_Ok on success, errors otherwise.
  */
@@ -1124,11 +1131,13 @@ stm32ipl_err_t STM32Ipl_ReadImage(image_t *img, const char *filename)
 	stm32ipl_err_t res;
 
 	const uint8_t bmp[2] = { 0x42, 0x4D }; /* BM */
-	const uint8_t p2[2]  = { 0x50, 0x32 }; /* P2 */
-	const uint8_t p3[2]  = { 0x50, 0x33 }; /* P3 */
-	const uint8_t p5[2]  = { 0x50, 0x35 }; /* P5 */
-	const uint8_t p6[2]  = { 0x50, 0x36 }; /* P6 */
+	const uint8_t p2[2] = { 0x50, 0x32 }; /* P2 */
+	const uint8_t p3[2] = { 0x50, 0x33 }; /* P3 */
+	const uint8_t p5[2] = { 0x50, 0x35 }; /* P5 */
+	const uint8_t p6[2] = { 0x50, 0x36 }; /* P6 */
+#ifdef STM32IPL_ENABLE_JPEG
 	const uint8_t jpg[2] = { 0xFF, 0xD8 }; /* FFD8 */
+#endif /* STM32IPL_ENABLE_JPEG */
 
 	if (!img || !filename)
 		return stm32ipl_err_InvalidParameter;
@@ -1145,13 +1154,15 @@ stm32ipl_err_t STM32Ipl_ReadImage(image_t *img, const char *filename)
 		res = readBmp(img, &fp);
 	else
 		if ((memcmp(p2, magic, 1) == 0)
-				&& ((memcmp(p2, magic, 2) == 0) || (memcmp(p3, magic, 2) == 0)
-					|| (memcmp(p5, magic, 2) == 0) || (memcmp(p6, magic, 2) == 0)))
+				&& ((memcmp(p2, magic, 2) == 0) || (memcmp(p3, magic, 2) == 0) || (memcmp(p5, magic, 2) == 0)
+						|| (memcmp(p6, magic, 2) == 0)))
 			res = readPnm(img, &fp);
 		else
+#ifdef STM32IPL_ENABLE_JPEG
 			if (memcmp(jpg, magic, 2) == 0)
 				res = readJpg(img, &fp);
 			else
+#endif /* STM32IPL_ENABLE_JPEG */
 				res = stm32ipl_err_UnsupportedFormat;
 
 	f_close(&fp);
@@ -1170,9 +1181,8 @@ stm32ipl_err_t STM32Ipl_ReadImage(image_t *img, const char *filename)
  * paletteColorUsed	The number of palette items used.
  * return stm32ipl_err_Ok on success, errors otherwise.
  */
-static stm32ipl_err_t writeBmpHeader(FIL *fp, uint32_t width, uint32_t height,
-		uint32_t dataOffset, uint32_t lineSize, uint32_t bitsPP,
-		uint32_t compression, uint32_t paletteColorUsed)
+static stm32ipl_err_t writeBmpHeader(FIL *fp, uint32_t width, uint32_t height, uint32_t dataOffset, uint32_t lineSize,
+		uint32_t bitsPP, uint32_t compression, uint32_t paletteColorUsed)
 {
 	FRESULT res;
 	uint8_t header[54];
@@ -1254,7 +1264,6 @@ static stm32ipl_err_t writeBmpHeader(FIL *fp, uint32_t width, uint32_t height,
 
 	/* biClrImportant. */
 	//header[50] = 0;
-
 	/* Write header */
 	res = f_write(fp, header, 14, &bytesWritten);
 	if (res != FR_OK || bytesWritten != 14)
@@ -1307,7 +1316,7 @@ static stm32ipl_err_t saveBmp(const image_t *img, const char *filename)
 	uint32_t padding;
 	UINT bytesWritten;
 
-	width  = img->w;
+	width = img->w;
 	height = img->h;
 
 	if (f_open(&fp, (const TCHAR*)filename, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
@@ -1375,7 +1384,7 @@ static stm32ipl_err_t saveBmp(const image_t *img, const char *filename)
 				}
 			}
 
-			for (int32_t i = height - 1; i >=  0; i--) {
+			for (int32_t i = height - 1; i >= 0; i--) {
 				uint32_t offset = i * width;
 
 				/* Image data. */
@@ -1428,7 +1437,7 @@ static stm32ipl_err_t saveBmp(const image_t *img, const char *filename)
 				return stm32ipl_err_WritingFile;
 			}
 
-			for (int32_t i = height - 1; i >=  0; i--) {
+			for (int32_t i = height - 1; i >= 0; i--) {
 				uint32_t offset = i * width;
 
 				/* Image data. */
@@ -1461,7 +1470,7 @@ static stm32ipl_err_t saveBmp(const image_t *img, const char *filename)
 				return stm32ipl_err_WritingFile;
 			}
 
-			for (int32_t i = height - 1; i >=  0; i--) {
+			for (int32_t i = height - 1; i >= 0; i--) {
 				uint8_t *data = img->data + i * dataLen;
 
 				/* Image data. */
@@ -1511,8 +1520,8 @@ static stm32ipl_err_t savePnm(const image_t *img, const char *filename, uint8_t 
 	FIL fp;
 	FRESULT res;
 	uint32_t size;
-	uint32_t width;
-	uint32_t height;
+	int32_t width;
+	int32_t height;
 	char text[64];
 	UINT bytesWritten;
 	uint32_t offset;
@@ -1522,7 +1531,7 @@ static stm32ipl_err_t savePnm(const image_t *img, const char *filename, uint8_t 
 
 	/* Write header. */
 	size = snprintf(text, sizeof(text), "P%d\n# Created by STM32IPL\n%ld %ld\n255\n", format, width, height);
-	
+
 	if (f_open(&fp, (const TCHAR*)filename, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
 		return stm32ipl_err_OpeningFile;
 
@@ -1670,6 +1679,7 @@ static stm32ipl_err_t savePgm(const image_t *img, const char *filename)
 	return savePnm(img, filename, format);
 }
 
+#ifdef STM32IPL_ENABLE_JPEG
 /* Writes the given image to JPEG file; the supported source image formats are:
  * Grayscale, RGB565 and RGB888:
  * - Binary is not supported.
@@ -1687,7 +1697,7 @@ static stm32ipl_err_t saveJpg(const image_t *img, const char *filename)
 	if (img->bpp == IMAGE_BPP_BINARY)
 		return stm32ipl_err_UnsupportedFormat;
 
-#ifdef STM32IPL_USE_HW_JPEG_CODEC
+#ifdef STM32IPL_ENABLE_HW_JPEG_CODEC
 	stm32ipl_err_t res;
 	/* If input image has RGB888 format, due to the jpeg_util implementation,
 	 * a formal conversion to RGB565 is needed. */
@@ -1710,6 +1720,7 @@ static stm32ipl_err_t saveJpg(const image_t *img, const char *filename)
 	return saveJPEGSW(img, filename);
 #endif
 }
+#endif /* STM32IPL_ENABLE_JPEG */
 
 /**
  * @brief Writes the given image to file; the target file format is determined
@@ -1721,8 +1732,8 @@ static stm32ipl_err_t saveJpg(const image_t *img, const char *filename)
  * - RGB888 can be saved to BMP, PPM or JPEG
  * Depending on the configuration file (stm32ipl_conf.h) the SW or the HW
  * JPEG encoder will be used.
- * img		Image to be saved.
- * filename	Name of the output file.
+ * img		Image to be saved; if it is not valid, an error is returned.
+ * filename	Name of the output file; if it is not valid, an error is returned.
  * return	stm32ipl_err_Ok on success, error otherwise.
  */
 stm32ipl_err_t STM32Ipl_WriteImage(const image_t *img, const char *filename)
@@ -1730,8 +1741,8 @@ stm32ipl_err_t STM32Ipl_WriteImage(const image_t *img, const char *filename)
 	if (!img || !img->data || !filename)
 		return stm32ipl_err_InvalidParameter;
 
-	if (img->bpp != IMAGE_BPP_BINARY && img->bpp != IMAGE_BPP_GRAYSCALE
-			&& img->bpp != IMAGE_BPP_RGB565 && img->bpp != IMAGE_BPP_RGB888)
+	if (img->bpp != IMAGE_BPP_BINARY && img->bpp != IMAGE_BPP_GRAYSCALE && img->bpp != IMAGE_BPP_RGB565
+			&& img->bpp != IMAGE_BPP_RGB888)
 		return stm32ipl_err_UnsupportedFormat;
 
 	switch (getImageFileFormat(filename)) {
@@ -1744,8 +1755,10 @@ stm32ipl_err_t STM32Ipl_WriteImage(const image_t *img, const char *filename)
 		case iplFileFormatPGM:
 			return savePgm(img, filename);
 
+#ifdef STM32IPL_ENABLE_JPEG
 		case iplFileFormatJPG:
 			return saveJpg(img, filename);
+#endif /* STM32IPL_ENABLE_JPEG */
 
 		default:
 			break;
@@ -1754,7 +1767,16 @@ stm32ipl_err_t STM32Ipl_WriteImage(const image_t *img, const char *filename)
 	return stm32ipl_err_UnsupportedFormat;
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 #else  /* STM32IPL_ENABLE_IMAGE_IO */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 stm32ipl_err_t STM32Ipl_ReadImage(image_t *img, const char *filename)
 {
 	/* Prevent unused argument(s) compilation warning. */
@@ -1764,6 +1786,7 @@ stm32ipl_err_t STM32Ipl_ReadImage(image_t *img, const char *filename)
 	/* Void implementation. */
 	return stm32ipl_err_NotImplemented;
 }
+
 stm32ipl_err_t STM32Ipl_WriteImage(const image_t *img, const char *filename)
 {
 	/* Prevent unused argument(s) compilation warning. */
@@ -1773,4 +1796,9 @@ stm32ipl_err_t STM32Ipl_WriteImage(const image_t *img, const char *filename)
 	/* Void implementation. */
 	return stm32ipl_err_NotImplemented;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* STM32IPL_ENABLE_IMAGE_IO */

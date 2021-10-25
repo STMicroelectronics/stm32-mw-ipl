@@ -19,10 +19,10 @@
 #define OPTIMIZED
 
 #ifdef IMLIB_ENABLE_APRILTAGS
-#if defined ( __GNUC__ ) // STM32IPL
+/* STM32IPL: removed.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#endif /* __GNUC__ */ // STM32IPL
+*/
 
 /* Copyright (C) 2013-2016, The Regents of The University of Michigan.
 All rights reserved.
@@ -103,7 +103,6 @@ either expressed or implied, of the Regents of The University of Michigan.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// "zarray.h"
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Defines a structure which acts as a resize-able array ala Java's ArrayList.
  */
@@ -131,6 +130,7 @@ static inline zarray_t *zarray_create(size_t el_sz)
     return za;
 }
 
+#ifndef STM32IPL // Unused; commented to prevent warnings.
 /**
  * Creates and returns a variable array structure capable of holding elements of
  * the specified size. It is the caller's responsibility to call zarray_destroy()
@@ -144,6 +144,7 @@ static inline zarray_t *zarray_create_fail_ok(size_t el_sz)
     if (za) za->el_sz = el_sz;
     return za;
 }
+#endif // STM32IPL
 
 /**
  * Frees all resources associated with the variable array structure which was
@@ -271,6 +272,7 @@ static inline void zarray_add(zarray_t *za, const void *p)
     za->size++;
 }
 
+#ifndef STM32IPL // Unused; commented to prevent warnings.
 /**
  * Adds a new element to the end of the supplied array, and sets its value
  * (by copying) from the data pointed to by the supplied pointer 'p'.
@@ -319,6 +321,7 @@ static inline void zarray_get(const zarray_t *za, int idx, void *p)
 
     memcpy(p, &za->data[idx*za->el_sz], za->el_sz);
 }
+#endif // STM32IPL
 
 /**
  * Similar to zarray_get(), but returns a "live" pointer to the internal
@@ -337,6 +340,7 @@ inline static void zarray_get_volatile(const zarray_t *za, int idx, void *p)
     *((void**) p) = &za->data[idx*za->el_sz];
 }
 
+#ifndef STM32IPL // Unused; commented to prevent warnings.
 inline static void zarray_truncate(zarray_t *za, int sz)
 {
    assert(za != NULL);
@@ -344,7 +348,6 @@ inline static void zarray_truncate(zarray_t *za, int sz)
    za->size = sz;
 }
 
-#ifndef STM32IPL // Unused; commented to prevent warnings.
 /**
  * Copies the memory array used internally by zarray to store its owned
  * elements to the address pointed by 'buffer'. It is the caller's responsibility
@@ -364,7 +367,6 @@ static inline size_t zarray_copy_data(const zarray_t *za, void *buffer, size_t b
     memcpy(buffer, za->data, za->el_sz * za->size);
     return za->el_sz * za->size;
 }
-#endif // STM32IPL
 
 /**
  * Removes the entry at index 'idx'.
@@ -425,7 +427,6 @@ static inline int zarray_remove_value(zarray_t *za, const void *p, int shuffle)
     return 0;
 }
 
-#ifndef STM32IPL // Unused; commented to prevent warnings.
 /**
  * Creates a new entry and inserts it into the array so that it will have the
  * index 'idx' (i.e. before the item which currently has that index). The value
@@ -449,7 +450,6 @@ static inline void zarray_insert(zarray_t *za, int idx, const void *p)
 
     za->size++;
 }
-#endif // STM32IPL
 
 /**
  * Sets the value of the current element at index 'idx' by copying its value from
@@ -469,7 +469,6 @@ static inline void zarray_set(zarray_t *za, int idx, const void *p, void *outp)
     memcpy(&za->data[idx*za->el_sz], p, za->el_sz);
 }
 
-#ifndef STM32IPL // Unused; commented to prevent warnings.
 /**
  * Calls the supplied function for every element in the array in index order.
  * The map function will be passed a pointer to each element in turn and must
@@ -499,6 +498,7 @@ static inline void zarray_map(zarray_t *za, void (*f)(void*))
  */
     void zarray_vmap(zarray_t *za, void (*f)());
 
+#ifndef STM32IPL // Unused; commented to prevent warnings.
 /**
  * Removes all elements from the array and sets its size to zero. Pointers to
  * any data elements obtained i.e. by zarray_get_volatile() will no longer be
@@ -510,7 +510,6 @@ static inline void zarray_clear(zarray_t *za)
     za->size = 0;
 }
 
-#ifndef STM32IPL // Unused; commented to prevent warnings.
 /**
  * Determines whether any element in the array has a value which matches the
  * data pointed to by 'p'.
@@ -530,7 +529,6 @@ static inline int zarray_contains(const zarray_t *za, const void *p)
 
     return 0;
 }
-#endif // STM32IPL
 
 /**
  * Uses qsort() to sort the elements contained by the array in ascending order.
@@ -556,6 +554,7 @@ static inline void zarray_sort(zarray_t *za, int (*compar)(const void*, const vo
 
     qsort(za->data, za->size, za->el_sz, compar);
 }
+#endif // STM32IPL
 
 /**
  * A comparison function for comparing strings which can be used by zarray_sort()
@@ -607,7 +606,7 @@ static inline void zarray_add_all(zarray_t * dest, const zarray_t * source)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// "zarray.c"
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#ifndef STM32IPL // Unused; commented to prevent warnings.
 int zstrcmp(const void * a_pp, const void * b_pp)
 {
     assert(a_pp != NULL);
@@ -631,7 +630,7 @@ void zarray_vmap(zarray_t *za, void (*f)())
         f(p);
     }
 }
-
+#endif // STM32IPL
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// "homography.h"
@@ -733,6 +732,7 @@ void zarray_vmap(zarray_t *za, void (*f)())
 
 matd_t *homography_compute(zarray_t *correspondences, int flags);
 
+#ifndef STM32IPL // Unused; commented to prevent warnings.
 //void homography_project(const matd_t *H, float x, float y, float *ox, float *oy);
 static inline void homography_project(const matd_t *H, float x, float y, float *ox, float *oy)
 {
@@ -743,6 +743,7 @@ static inline void homography_project(const matd_t *H, float x, float y, float *
     *ox = xx / zz;
     *oy = yy / zz;
 }
+#endif // STM32IPL
 
 // assuming that the projection matrix is:
 // [ fx 0  cx 0 ]
@@ -1042,7 +1043,7 @@ matd_t *homography_to_pose(const matd_t *H, float fx, float fy, float cx, float 
     // (Use geometric average of the two length vectors we have)
     float length1 = sqrtf(R00*R00 + R10*R10 + R20*R20);
     float length2 = sqrtf(R01*R01 + R11*R11 + R21*R21);
-    float s = 1.0 / sqrtf(length1 * length2);
+		float s = 1.0f / sqrtf(length1 * length2);	// STM32IPL: added f to the constant.
 
     // get sign of S by requiring the tag to be in front the camera;
     // we assume camera looks in the -Z direction.
@@ -1127,7 +1128,7 @@ matd_t *homography_to_model_view(const matd_t *H, float F, float G, float A, flo
     // (Use geometric average of the two length vectors we have)
     float length1 = sqrtf(R00*R00 + R10*R10 + R20*R20);
     float length2 = sqrtf(R01*R01 + R11*R11 + R21*R21);
-    float s = 1.0 / sqrtf(length1 * length2);
+    float s = 1.0f / sqrtf(length1 * length2);	// STM32IPL: added f to the constant.
 
     // get sign of S by requiring the tag to be in front of the camera
     // (which is Z < 0) for our conventions.
@@ -1231,6 +1232,7 @@ void quat_to_matrix(const float q[4], matd_t *M)
     MATD_EL(M, 2, 2) = w*w - x*x - y*y + z*z;
 }
 
+#ifndef STM32IPL
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// "g2d.h"
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1298,7 +1300,7 @@ zarray_t *g2d_polygon_create_data(float v[][2], int sz);
 
 zarray_t *g2d_polygon_create_zeros(int sz);
 
-zarray_t *g2d_polygon_create_empty();
+zarray_t *g2d_polygon_create_empty(void); // STM32IPL: void added.
 
 void g2d_polygon_add(zarray_t *poly, float v[2]);
 
@@ -1734,7 +1736,7 @@ int g2d_line_intersect_line(const g2d_line_t *linea, const g2d_line_t *lineb, fl
     float det = m00*m11-m01*m10;
 
     // parallel lines?
-    if (fabs(det) < 0.00000001)
+    if (fabs(det) < 0.00000001f)	// STM32IPL: added f to the constant.
         return 0;
 
     // inverse of m
@@ -2500,7 +2502,7 @@ struct apriltag_detection
 };
 
 // don't forget to add a family!
-apriltag_detector_t *apriltag_detector_create();
+apriltag_detector_t *apriltag_detector_create(void); // STM32IPL: void added.
 
 // add a family to the apriltag detector. caller still "owns" the family.
 // a single instance should only be provided to one apriltag detector instance.
@@ -6661,7 +6663,7 @@ void fit_line(struct line_fit_pt *lfps, int sz, int i0, int i1, float *lineparm,
         //
         // XXX this was using the float-precision atan2. Was there a case where
         // we needed that precision? Seems doubtful.
-        float normal_theta = .5 * atan2f(-2*Cxy, (Cyy - Cxx));
+        float normal_theta = .5f * atan2f(-2*Cxy, (Cyy - Cxx));	// STM32IPL: added f to the constant.
         nx = cosf(normal_theta);
         ny = sinf(normal_theta);
     } else {
@@ -7267,7 +7269,7 @@ int fit_quad(apriltag_detector_t *td, image_u8_t *im, zarray_t *cluster, struct 
 
             // inverse.
             float W00 = A11 / det, W01 = -A01 / det;
-            if (fabs(det) < 0.001) {
+            if (fabs(det) < 0.001f) {	// STM32IPL: added f to the constant.
                 res = 0;
                 goto finish;
             }
@@ -7357,7 +7359,7 @@ STM32IPL */
         }
 
         // looking for 2PI
-        if (total < 6.2 || total > 6.4) {
+        if (total < 6.2f || total > 6.4f) {	// STM32IPL: added f to the constants.
             res = 0;
             goto finish;
         }
@@ -8544,7 +8546,7 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
     // { initial x, initial y, delta x, delta y, WHITE=1 }
     float patterns[] = {
         // left white column
-        0 - white_border / 2.0, 0.5,
+        0 - white_border / 2.0f, 0.5f,	// STM32IPL: added f to the constants.
         0, 1,
         1,
 
@@ -8554,32 +8556,32 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
         0,
 
         // right white column
-        2*family->black_border + family->d + white_border / 2.0, .5,
+        2*family->black_border + family->d + white_border / 2.0f, .5f,	// STM32IPL: added f to the constant.
         0, 1,
         1,
 
         // right black column
-        2*family->black_border + family->d - family->black_border / 2.0, .5,
+        2*family->black_border + family->d - family->black_border / 2.0f, .5f,	// STM32IPL: added f to the constant.
         0, 1,
         0,
 
         // top white row
-        0.5, -white_border / 2.0,
+        0.5f, -white_border / 2.0f,	// STM32IPL: added f to the constants.
         1, 0,
         1,
 
         // top black row
-        0.5, family->black_border / 2.0,
+        0.5f, family->black_border / 2.0f,	// STM32IPL: added f to the constants.
         1, 0,
         0,
 
         // bottom white row
-        0.5, 2*family->black_border + family->d + white_border / 2.0,
+        0.5f, 2*family->black_border + family->d + white_border / 2.0f,	// STM32IPL: added f to the constants.
         1, 0,
         1,
 
         // bottom black row
-        0.5, 2*family->black_border + family->d - family->black_border / 2.0,
+        0.5f, 2*family->black_border + family->d - family->black_border / 2.0f,	// STM32IPL: added f to the constants.
         1, 0,
         0
 
@@ -8599,8 +8601,8 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
             float tagx01 = (pattern[0] + i*pattern[2]) / (2*family->black_border + family->d);
             float tagy01 = (pattern[1] + i*pattern[3]) / (2*family->black_border + family->d);
 
-            float tagx = 2*(tagx01-0.5);
-            float tagy = 2*(tagy01-0.5);
+            float tagx = 2*(tagx01-0.5f);	// STM32IPL: added f to the constant.
+            float tagy = 2*(tagy01-0.5f);	// STM32IPL: added f to the constant.
 
             float px, py;
             homography_project(quad->H, tagx, tagy, &px, &py);
@@ -8648,8 +8650,8 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
         float tagy01 = (family->black_border + bity + 0.5) / (2*family->black_border + family->d);
 
         // scale to [-1, 1]
-        float tagx = 2*(tagx01-0.5);
-        float tagy = 2*(tagy01-0.5);
+        float tagx = 2*(tagx01-0.5f);	// STM32IPL: added f to the constant.
+        float tagy = 2*(tagy01-0.5f);	// STM32IPL: added f to the constant.
 
         float px, py;
         homography_project(quad->H, tagx, tagy, &px, &py);
@@ -8665,7 +8667,7 @@ float quad_decode(apriltag_family_t *family, image_u8_t *im, struct quad *quad, 
 
         int v = im->buf[iy*im->stride + ix];
 
-        float thresh = (graymodel_interpolate(&blackmodel, tagx, tagy) + graymodel_interpolate(&whitemodel, tagx, tagy)) / 2.0;
+        float thresh = (graymodel_interpolate(&blackmodel, tagx, tagy) + graymodel_interpolate(&whitemodel, tagx, tagy)) / 2.0f;	// STM32IPL: added f to the constant.
         if (v > thresh) {
             white_score += (v - thresh);
             white_score_count ++;
@@ -8822,7 +8824,7 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, struct qu
             float range = 1.0 + 1;
 
             // XXX tunable step size.
-            for (float n = -range; n <= range; n +=  0.25) {
+            for (float n = -range; n <= range; n +=  0.25f) {	// STM32IPL: added f to the constant.
                 // Because of the guaranteed winding order of the
                 // points in the quad, we will start inside the white
                 // portion of the quad and work our way outward.
@@ -8880,7 +8882,7 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, struct qu
         float Cxy = Mxy / N - Ex*Ey;
         float Cyy = Myy / N - Ey*Ey;
 
-        float normal_theta = .5 * atan2f(-2*Cxy, (Cyy - Cxx));
+        float normal_theta = .5f * atan2f(-2*Cxy, (Cyy - Cxx));	// STM32IPL: added f to the constant.
         nx = cosf(normal_theta);
         ny = sinf(normal_theta);
         lines[edge][0] = Ex;
@@ -8901,7 +8903,7 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, struct qu
         float det = A00 * A11 - A10 * A01;
 
         // inverse.
-        if (fabs(det) > 0.001) {
+        if (fabs(det) > 0.001f) {	// STM32IPL: added f to the constant.
             // solve
             float W00 = A11 / det, W01 = -A01 / det;
 
@@ -9026,7 +9028,7 @@ zarray_t *apriltag_detector_detect(apriltag_detector_t *td, image_u8_t *im_orig)
                     det->goodness = goodness;
                     det->decision_margin = decision_margin;
 
-                    float theta = -entry.rotation * M_PI / 2.0;
+                    float theta = -entry.rotation * M_PI / 2.0f;	// STM32IPL: added f to the constant.
                     float c = cos(theta), s = sin(theta);
 
                     // Fix the rotation of our homography to properly orient the tag
@@ -9183,7 +9185,6 @@ void apriltag_detections_destroy(zarray_t *detections)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef STM32IPL_ENABLE_APRILTAG // STM32IPL
 void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_families_t families,
                           float fx, float fy, float cx, float cy)
 {
@@ -9344,7 +9345,6 @@ void imlib_find_apriltags(list_t *out, image_t *ptr, rectangle_t *roi, apriltag_
     fb_free(); // umm_init_x();
 #endif // STM32IPL
 }
-#endif /* STM32IPL_ENABLE_APRILTAG */ // STM32IPL
 
 #ifdef IMLIB_ENABLE_FIND_RECTS
 void imlib_find_rects(list_t *out, image_t *ptr, rectangle_t *roi, uint32_t threshold)
@@ -9545,6 +9545,7 @@ void imlib_find_rects(list_t *out, image_t *ptr, rectangle_t *roi, uint32_t thre
 #endif // STM32IPL
 }
 #endif //IMLIB_ENABLE_FIND_RECTS
+#endif // STM32IPL
 
 #ifdef IMLIB_ENABLE_ROTATION_CORR
 // http://jepsonsblog.blogspot.com/2012/11/rotation-in-3d-using-opencvs.html
@@ -9658,7 +9659,7 @@ void imlib_rotation_corr(image_t *img, float x_rotation, float y_rotation, float
         float T4_10 = MATD_EL(T4, 1, 0), T4_11 = MATD_EL(T4, 1, 1), T4_12 = MATD_EL(T4, 1, 2);
         float T4_20 = MATD_EL(T4, 2, 0), T4_21 = MATD_EL(T4, 2, 1), T4_22 = MATD_EL(T4, 2, 2);
 
-        if ((fast_fabsf(T4_20) < MATD_EPS) && (fast_fabsf(T4_21) < MATD_EPS)) { // warp affine
+			if ((fast_fabsf(T4_20) < MATD_EPS) && (fast_fabsf(T4_21) < MATD_EPS)) { // warp affine
             T4_00 /= T4_22;
             T4_01 /= T4_22;
             T4_02 /= T4_22;
@@ -9855,7 +9856,5 @@ void imlib_rotation_corr(image_t *img, float x_rotation, float y_rotation, float
     fb_free();
 }
 #endif //IMLIB_ENABLE_ROTATION_CORR
-#if defined ( __GNUC__ ) // STM32IPL
-#pragma GCC diagnostic pop
-#endif /* __GNUC__ */ // STM32IPL
+// STM32IPL		#pragma GCC diagnostic pop
 #endif //IMLIB_ENABLE_APRILTAGS

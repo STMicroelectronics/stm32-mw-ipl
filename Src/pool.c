@@ -36,7 +36,7 @@ void imlib_midpoint_pool(image_t *img_i, image_t *img_o, int x_div, int y_div, c
         }
         case IMAGE_BPP_GRAYSCALE:
         {
-            for (int y = 0, yy = img_i->h, yyy = (img_i->h % y_div) / 2 / y_div; y < yy; y++) {
+			for (int y = 0, yy = img_i->h / y_div, yyy = (img_i->h % y_div) / 2; y < yy; y++) { // STM32IPL: bug fixed.
                 uint8_t *row_ptr = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(img_o, y);
                 for (int x = 0, xx = img_i->w / x_div, xxx = (img_i->w % x_div) / 2; x < xx; x++) {
                     int min = COLOR_GRAYSCALE_MAX, max = COLOR_GRAYSCALE_MIN;
@@ -47,6 +47,7 @@ void imlib_midpoint_pool(image_t *img_i, image_t *img_o, int x_div, int y_div, c
                             max = IM_MAX(max, pixel);
                         }
                     }
+
                     IMAGE_PUT_GRAYSCALE_PIXEL_FAST(row_ptr, x,
                         ((min*min_bias)+(max*max_bias))>>8);
                 }
@@ -93,10 +94,10 @@ void imlib_midpoint_pool(image_t *img_i, image_t *img_o, int x_div, int y_div, c
                     int b_min = COLOR_B8_MAX, b_max = COLOR_B8_MIN;
                     for (int i = 0; i < y_div; i++) {
                         for (int j = 0; j < x_div; j++) {
-                            const rgb888_t pixel888 = IMAGE_GET_RGB888_PIXEL(img_i, xxx + (x * x_div) + j, yyy + (y * y_div) + i);
-                            int r = pixel888.r;
-                            int g = pixel888.g;
-                            int b = pixel888.b;
+                            const rgb888_t pixel = IM_GET_RGB888_PIXEL(img_i, xxx + (x * x_div) + j, yyy + (y * y_div) + i);
+                            int r = pixel.r;
+                            int g = pixel.g;
+                            int b = pixel.b;
                             r_min = IM_MIN(r_min, r);
                             r_max = IM_MAX(r_max, r);
                             g_min = IM_MIN(g_min, g);
