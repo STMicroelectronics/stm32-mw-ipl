@@ -13,6 +13,7 @@
  *
  * Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
  * Copyright (c) 2013-2019 Kwabena W. Agyeman <kwagyeman@openmv.io>
+ * Copyright (c) 2013-2016 The Regents of The University of Michigan
  *
  * This software is licensed under terms that can be found in the LICENSE file
  * in the root directory of this software component.
