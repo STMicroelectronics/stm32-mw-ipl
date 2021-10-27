@@ -66,5 +66,3 @@ size_t write_file(JFILE *file, uint8_t *buf, uint32_t sizeofbuf)
 	return 0;
 #endif /* STM32IPL_ENABLE_JPEG */
 }
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
