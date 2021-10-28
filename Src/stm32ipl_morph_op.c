@@ -9,11 +9,6 @@
  * Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.
  *
- * Portions of this file are part of the OpenMV project.
- *
- * Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
- * Copyright (c) 2013-2019 Kwabena W. Agyeman <kwagyeman@openmv.io>
- *
  * This software is licensed under terms that can be found in the LICENSE file
  * in the root directory of this software component.
  * If no LICENSE file comes with this software, it is provided AS-IS.
@@ -62,7 +57,7 @@ stm32ipl_err_t STM32Ipl_Dilate(image_t *img, uint8_t kSize, uint8_t threshold, c
  * @brief Removes pixels from the edges of segmented areas.
  * Convolving a kernel pixels across the image and zeroing the center pixel of the kernel
  * if the sum of the neighbour pixels set is not greater than threshold.
- * The supported formats are (Binary, Grayscale, RGB565).
+ * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img			Image; if it is not valid, an error is returned.
  * @param kSize			Kernel size; use 1 (3x3 kernel), 2 (5x5 kernel), ..., n (((n*2)+1)x((n*2)+1) kernel).
  * @param threshold 	Minimum value of the sum of neighbour pixel in the kernel.
@@ -90,7 +85,7 @@ stm32ipl_err_t STM32Ipl_Erode(image_t *img, uint8_t kSize, uint8_t threshold, co
 
 /**
  * @brief Performs erosion and dilation on an image.
- * The supported formats are Binary, Grayscale, RGB565.
+ * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img			Image; if it is not valid, an error is returned.
  * @param kSize	is 		Kernel size; use 1 (3x3 kernel), 2 (5x5 kernel), ..., n (((n*2)+1)x((n*2)+1) kernel).
  * @param threshold 	Threshold parameter used by dilate and erode.
@@ -118,7 +113,7 @@ stm32ipl_err_t STM32Ipl_Open(image_t *img, uint8_t kSize, uint8_t threshold, con
 
 /**
  * @brief Performs dilation and erosion on an image in order.
- * The supported formats are Binary, Grayscale, RGB565.
+ * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img			Image; if it is not valid, an error is returned.
  * @param kSize			Kernel size; use 1 (3x3 kernel), 2 (5x5 kernel), ..., n (((n*2)+1)x((n*2)+1) kernel).
  * @param threshold 	Threshold parameter used by dilate and erode.
