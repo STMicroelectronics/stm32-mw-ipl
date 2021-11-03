@@ -13,6 +13,9 @@
  * in the root directory of this software component.
  * If no LICENSE file comes with this software, it is provided AS-IS.
  *
+ * Viola-Jones object detector implementation.
+ * Based on the work of Francesco Comaschi (f.comaschi@tue.nl)
+ *
  ******************************************************************************
  */
 

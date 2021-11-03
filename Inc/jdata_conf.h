@@ -56,5 +56,3 @@
 /* Private functions ---------------------------------------------------------*/
 size_t read_file(JFILE *file, uint8_t *buf, uint32_t sizeofbuf);
 size_t write_file(JFILE *file, uint8_t *buf, uint32_t sizeofbuf);
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
