@@ -20,7 +20,7 @@
 #define __STM32IPL_H_
 
 #include "stm32ipl_conf.h"
-#include "stm32ipl_imlib_ext.h"
+#include "stm32ipl_imlib.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,51 +110,53 @@ if (!STM32Ipl_ImageFormatSupported((img), (formats))) \
 	} else \
 		STM32Ipl_RectInit(realRoi, 0, 0, img->w, img->h); \
 
-
 /**
  * @brief STM32IPL color type. It has 0xRRGGBB format.
  * STM32IPL_COLOR_xxx colors follow such format.
  */
-typedef uint32_t stm32ipl_color_t;
+typedef uint32_t stm32ipl_color_t;	/**< STM32IPL color type. It has 0xRRGGBB format. */
 
 /**
  * @brief STM32IPL error types.
  */
 typedef enum _stm32ipl_err_t
 {
-	stm32ipl_err_Ok = 0,
-	stm32ipl_err_Generic = -1,
-	stm32ipl_err_InvalidParameter = -2,
-	stm32ipl_err_OutOfMemory = -3,
-	stm32ipl_err_BadPointer = -4,
-	stm32ipl_err_UnsupportedFormat = -5,
-	stm32ipl_err_OpeningFile = -6,
-	stm32ipl_err_ClosingFile = -7,
-	stm32ipl_err_ReadingFile = -8,
-	stm32ipl_err_WritingFile = -9,
-	stm32ipl_err_SeekingFile = -10,
-	stm32ipl_err_NotImplemented = -11,
-	stm32ipl_err_OpNotCompleted = -12,
-	stm32ipl_err_WrongSize = -13,
-	stm32ipl_err_EmptyImage = -14,
-	stm32ipl_err_EmptyMatrix = -15,
-	stm32ipl_err_WrongMatrixDim = -16,
-	stm32ipl_err_ZeroMatrixDim = -17,
-	stm32ipl_err_ReadingDatabase = -18,
-	stm32ipl_err_WritingDatabase = -19,
-	stm32ipl_err_UnsupportedMethod = -20,
-	stm32ipl_err_NotAllowed = -21,
-	stm32ipl_err_NotInPlaceFunction = -22,
-	stm32ipl_err_OpeningSource = -23,
-	stm32ipl_err_WrongROI = -24,
+	stm32ipl_err_Ok                 =   0,	/**< No error. */
+	stm32ipl_err_Generic            =  -1,	/**< Generic error. */
+	stm32ipl_err_InvalidParameter   =  -2,	/**< Function parameter is not valid. */
+	stm32ipl_err_OutOfMemory        =  -3,	/**< No memory is available. */
+	stm32ipl_err_BadPointer         =  -4,	/**< Invalid pointer. */
+	stm32ipl_err_UnsupportedFormat  =  -5,	/**< Format is not supported. */
+	stm32ipl_err_OpeningFile        =  -6,	/**< Error opening file. */
+	stm32ipl_err_ClosingFile        =  -7,	/**< Error closing file. */
+	stm32ipl_err_ReadingFile        =  -8,	/**< Error reading file. */
+	stm32ipl_err_WritingFile        =  -9,	/**< Error writing file. */
+	stm32ipl_err_SeekingFile        = -10,	/**< Error seeking file. */
+	stm32ipl_err_NotImplemented     = -11,	/**< Function is not implemented. */
+	stm32ipl_err_OpNotCompleted     = -12,	/**< Operation was not completed. */
+	stm32ipl_err_WrongSize          = -13,	/**< Size is wrong. */
+	stm32ipl_err_EmptyImage         = -14,	/**< Image is empty. */
+	stm32ipl_err_EmptyMatrix        = -15,	/**< Matrix is empty. */
+	stm32ipl_err_WrongMatrixDim     = -16,	/**< Matrix has wrong dimension. */
+	stm32ipl_err_ZeroMatrixDim      = -17,	/**< Matrix has zero dimension. */
+	stm32ipl_err_ReadingDatabase    = -18,	/**< Error reading the database. */
+	stm32ipl_err_WritingDatabase    = -19,	/**< Error writing the database. */
+	stm32ipl_err_UnsupportedMethod  = -20,	/**< Method is not supported. */
+	stm32ipl_err_NotAllowed         = -21,	/**< Operation is not allowed. */
+	stm32ipl_err_NotInPlaceFunction = -22,	/**< Function does not work in place. */
+	stm32ipl_err_OpeningSource      = -23,	/**< Error opening source. */
+	stm32ipl_err_WrongROI           = -24,	/**< ROI is wrong. */
 } stm32ipl_err_t;
 
 /**
- * @brief The image formats supported by this library.
+ * The image formats supported by this library.
  */
 typedef enum _stm32ipl_if_t
 {
-	stm32ipl_if_binary = 1, stm32ipl_if_grayscale = 2, stm32ipl_if_rgb565 = 4, stm32ipl_if_rgb888 = 8,
+	stm32ipl_if_binary = 1,
+	stm32ipl_if_grayscale = 2,
+	stm32ipl_if_rgb565 = 4,
+	stm32ipl_if_rgb888 = 8,
 } stm32ipl_if_t;
 
 /**
@@ -165,9 +167,9 @@ typedef enum _stm32ipl_if_t
  */
 typedef struct _ellipse_t
 {
-	point_t center; /**< Coordinates of the center of the ellipse.*/
-	int16_t radiusX; /**< Length of the horizontal semi-axis. */
-	int16_t radiusY; /**< Length of the vertical semi-axis. */
+	point_t center;   /**< Coordinates of the center of the ellipse. */
+	int16_t radiusX;  /**< Length of the horizontal semi-axis. */
+	int16_t radiusY;  /**< Length of the vertical semi-axis. */
 	int16_t rotation; /**< Rotation angle (degrees). */
 } ellipse_t;
 
@@ -194,7 +196,18 @@ bool STM32Ipl_ImageFormatSupported(const image_t *img, uint32_t formats);
 stm32ipl_err_t STM32Ipl_Copy(const image_t *src, image_t *dst);
 stm32ipl_err_t STM32Ipl_CopyData(const image_t *src, image_t *dst);
 stm32ipl_err_t STM32Ipl_Clone(const image_t *src, image_t *dst);
-uint32_t STM32Ipl_AdaptColor(const image_t *img, uint32_t color);
+uint32_t STM32Ipl_AdaptColor(const image_t *img, stm32ipl_color_t color);
+/** @} */
+
+/**
+ * @defgroup memAlloc Memory allocation functions
+ *
+ *  @{
+ */
+void* STM32Ipl_Alloc(uint32_t size);
+void* STM32Ipl_Alloc0(uint32_t size);
+void STM32Ipl_Free(void *mem);
+void* STM32Ipl_Realloc(void *mem, uint32_t size);
 /** @} */
 
 /**

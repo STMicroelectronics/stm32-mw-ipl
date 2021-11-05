@@ -11,8 +11,6 @@
 #include "imlib.h"
 #ifndef STM32IPL
 #include "xalloc.h"
-#else // STM32IPL
-#include "stm32ipl_mem_alloc.h"
 #endif // STM32IPL
 
 point_t *point_alloc(int16_t x, int16_t y)

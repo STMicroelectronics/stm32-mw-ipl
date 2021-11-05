@@ -12,8 +12,6 @@
 #include "array.h"
 #ifndef STM32IPL
 #include "xalloc.h"
-#else // STM32IPL
-#include "stm32ipl_mem_alloc.h"
 #endif // STM32IPL
 
 rectangle_t *rectangle_alloc(int16_t x, int16_t y, int16_t w, int16_t h)

@@ -19,6 +19,8 @@
 #ifndef __STM32IPL_MEM_ALLOC_H_
 #define __STM32IPL_MEM_ALLOC_H_
 
+///@cond
+
 #ifdef STM32IPL
 
 #include <stdint.h>
@@ -35,16 +37,16 @@ extern "C" {
 void umm_alloc_fail(void);
 
 /* General purpose allocation functions.
- * They can be used at app side.
+ * They are for library internals only.
+ * Do not use at application side!
  */
 void* xalloc(uint32_t size);
-void* xalloc_try_alloc(uint32_t size);
 void* xalloc0(uint32_t size);
 void xfree(void *mem);
 void* xrealloc(void *mem, uint32_t size);
 
 /* Frame buffer allocation functions.
- * They are for openmv internals only.
+ * They are for library internals only.
  * Do not use at application side!
  */
 void fb_init(void);
@@ -64,5 +66,7 @@ void fb_free_all(void);
 #endif
 
 #endif /* STM32IPL */
+
+///@endcond
 
 #endif /* __STM32IPL_MEM_ALLOC_H_ */

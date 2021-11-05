@@ -28,6 +28,7 @@
 extern "C" {
 #endif
 
+///@cond
 #define FB_ALLOC_MAX_ENTRY		1000	/* Max number of entries managed with fb_alloc. */
 
 static uint32_t g_fb_alloc_stack[FB_ALLOC_MAX_ENTRY];
@@ -36,18 +37,68 @@ static uint32_t g_fb_alloc_imark = 0;
 
 /* Prototypes. */
 __attribute__((weak)) void STM32Ipl_FaultHandler(const char *error);
+///@endcond
 
-/* xalloc and fb_alloc are used by Openmv functions.
- * STM32IPL re-implements such functions by wrapping UMM functions.
+/*
+ * Exported functions.
  */
 
+/**
+ * @brief Allocates a memory buffer of size bytes from the bunch of memory reserved by STM32Ipl_InitLib().
+ * Such buffer must be released with STM32Ipl_Free().
+ * @param size	Size of the memory buffer to be allocated (bytes).
+ * @return		The allocated memory buffer, null in case of errors.
+ */
+void* STM32Ipl_Alloc(uint32_t size)
+{
+	return xalloc(size);
+}
+
+/**
+ * @brief Same as STM32Ipl_Alloc(), but the allocated buffer is set to zero.
+ * Such buffer must be released with STM32Ipl_Free().
+ * @param size	Size of the memory buffer to be allocated (bytes).
+ * @return		The allocated memory buffer, null in case of errors.
+ */
+void* STM32Ipl_Alloc0(uint32_t size)
+{
+	return xalloc0(size);
+}
+
+/**
+ * @brief Frees a memory buffer previously allocated with STM32Ipl_Alloc() or STM32Ipl_Alloc0().
+ * @param mem	Pointer to the the memory buffer to be released.
+ * @return		void
+ */
+void STM32Ipl_Free(void *mem)
+{
+	xfree(mem);
+}
+
+/**
+ * @brief Re-sizes an existing memory buffer to the given of size.
+ * Such buffer must be released with STM32Ipl_Free().
+ * @param mem	Pointer to the the memory buffer.
+ * @param size	Size of the memory buffer to be allocated (bytes).
+ * @return		The allocated memory buffer, null in case of errors.
+ */
+void* STM32Ipl_Realloc(void *mem, uint32_t size)
+{
+	return xrealloc(mem, size);
+}
+
+///@cond
 __attribute__((weak)) void STM32Ipl_FaultHandler(const char *error)
 {
 	while (1)
 		;
 }
 
-/**
+/* xalloc and fb_alloc are used by Openmv functions.
+ * STM32IPL re-implements such functions by wrapping UMM functions.
+ */
+
+/*
  * @brief Trap function called when the UMM allocator fails.
  * @return		void.
  */
@@ -56,7 +107,7 @@ void umm_alloc_fail(void)
 	STM32Ipl_FaultHandler("umm_alloc() failure");
 }
 
-/**
+/*
  * @brief Allocates a memory buffer of size bytes from the bunch of memory reserved by STM32Ipl_InitLib().
  * Such buffer must be released with xfree().
  * @param size	Size of the memory buffer to be allocated (bytes).
@@ -74,7 +125,7 @@ void* xalloc(uint32_t size)
  }
  */
 
-/**
+/*
  * @brief Same as xalloc(), but the allocated buffer is set to zero.
  * Such buffer must be released with xfree().
  * @param size	Size of the memory buffer to be allocated (bytes).
@@ -92,7 +143,7 @@ void* xalloc0(uint32_t size)
 	return mem;
 }
 
-/**
+/*
  * @brief Frees a memory buffer previously allocated with xalloc() or xalloc0().
  * @param mem	Pointer to the the memory buffer to be released.
  * @return		void
@@ -102,7 +153,7 @@ void xfree(void *mem)
 	umm_free(mem);
 }
 
-/**
+/*
  * @brief Re-sizes an existing memory buffer to the given of size.
  * Such buffer must be released with xfree().
  * @param mem	Pointer to the the memory buffer.
@@ -114,7 +165,7 @@ void* xrealloc(void *mem, uint32_t size)
 	return umm_realloc(mem, size);
 }
 
-/**
+/*
  * @brief Initialized the fb mechanism, that is a stack based memory allocator that, under the
  * hood, uses heap memory .
  * @return		void.
@@ -126,7 +177,7 @@ void fb_init(void)
 	g_fb_alloc_imark = 0;
 }
 
-/**
+/*
  * @brief Can be called by the user in case of memory allocation errors.
  * @return		void.
  */
@@ -135,7 +186,7 @@ void fb_alloc_fail(void)
 	STM32Ipl_FaultHandler("fb_alloc() failure");
 }
 
-/**
+/*
  * @brief Returns the size (bytes) of the biggest memory block available from the fb stack.
  * @return		void.
  */
@@ -144,7 +195,7 @@ uint32_t fb_avail(void)
 	return umm_max_free_block_size();
 }
 
-/**
+/*
  * @brief Allocates a memory buffer of size bytes from the fb stack.
  * Such buffer must be released with fb_free().
  * @param size	Size of the memory buffer to be allocated (bytes).
@@ -169,7 +220,7 @@ void* fb_alloc(uint32_t size, int hints)
 	return p;
 }
 
-/**
+/*
  * @brief Same as fb_alloc(), but the allocated buffer is set to zero.
  * Such buffer must be released with fb_free().
  * @param size	Size of the memory buffer to be allocated (bytes).
@@ -189,7 +240,7 @@ void* fb_alloc0(uint32_t size, int hints)
 	return p;
 }
 
-/**
+/*
  * @brief Allocates a biggest memory buffer from the fb stack.
  * Such buffer must be released with fb_free().
  * @param size	Used to return the size of the allocated memory buffer (bytes).
@@ -207,7 +258,7 @@ void* fb_alloc_all(uint32_t *size, int hints)
 	return p;
 }
 
-/**
+/*
  * @brief Same as fb_alloc_all(), but the allocated buffer is set to zero.
  * Such buffer must be released with fb_free().
  * @param size	Size of the memory buffer to be allocated (bytes).
@@ -225,7 +276,7 @@ void* fb_alloc0_all(uint32_t *size, int hints)
 	return p;
 }
 
-/**
+/*
  * @brief Frees the last memory buffer allocated with fb_alloc(), fb_alloc_all() or fb_alloc0_all().
  * @return		void
  */
@@ -239,7 +290,7 @@ void fb_free(void)
 	g_fb_alloc_stack[g_fb_alloc_inext] = 0;
 }
 
-/**
+/*
  * @brief Frees all the memory buffers allocated with fb_alloc(), fb_alloc_all() or fb_alloc0_all().
  * @return		void
  */
@@ -250,7 +301,7 @@ void fb_free_all(void)
 		fb_free();
 }
 
-/**
+/*
  * @brief Marks the current stack pointer.
  * @return		void.
  */
@@ -259,7 +310,7 @@ void fb_alloc_mark(void)
 	g_fb_alloc_imark = g_fb_alloc_inext;
 }
 
-/**
+/*
  * @brief Frees all the memory buffers allocated on the stack after the last call to fb_alloc_mark().
  * @return		void.
  */
@@ -270,6 +321,7 @@ void fb_alloc_free_till_mark(void)
 	for (int i = 0; i < e; i++)
 		fb_free();
 }
+///@endcond
 
 #ifdef __cplusplus
 }

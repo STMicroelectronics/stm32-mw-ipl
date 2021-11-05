@@ -23,7 +23,6 @@
 #include "xalloc.h"
 #else // STM32IPL
 #define FR_OK 0
-#include "stm32ipl_mem_alloc.h"
 #endif // STM32IPL
 #include "imlib.h"
 // built-in cascades

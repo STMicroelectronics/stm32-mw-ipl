@@ -14,8 +14,6 @@
 #include "imlib.h"
 #ifndef STM32IPL
 #include "fb_alloc.h"
-#else // STM32IPL
-#include "stm32ipl_mem_alloc.h"
 #endif // STM32IPL
 
 #ifdef IMLIB_ENABLE_BINARY_OPS

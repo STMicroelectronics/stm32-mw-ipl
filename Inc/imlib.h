@@ -11,7 +11,7 @@
 #ifndef __IMLIB_H__
 #define __IMLIB_H__
 
-#include "stm32ipl_imlib_ext.h"
+#include "stm32ipl_imlib.h"
 #include "stm32ipl_imlib_int.h"
 
 #endif //__IMLIB_H__

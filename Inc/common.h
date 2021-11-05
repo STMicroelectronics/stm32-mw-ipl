@@ -24,6 +24,7 @@
 #define debug_printf(...)
 #endif
 
+/* STM32IPL: commented as not used.
 #define OMV_MAX(a,b)                    \
 ({                                      \
     __typeof__ (a) _a = (a);            \
@@ -37,4 +38,5 @@
     __typeof__ (b) _b = (b);            \
     _a < _b ? _a : _b;                  \
 })
+*/ // STM32IPL
 #endif //__OMV_COMMON_H__

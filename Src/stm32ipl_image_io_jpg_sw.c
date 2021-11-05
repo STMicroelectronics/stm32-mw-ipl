@@ -16,6 +16,8 @@
  ******************************************************************************
  */
 
+///@cond
+
 #include "stm32ipl_image_io_jpg_sw.h"
 
 #ifdef STM32IPL_ENABLE_IMAGE_IO
@@ -361,7 +363,7 @@ stm32ipl_err_t saveJPEGSW(const image_t *img, const char *filename)
 	if (f_open(&fp, (const TCHAR*)filename, FA_WRITE | FA_CREATE_ALWAYS) != FR_OK)
 		return stm32ipl_err_OpeningFile;
 
-	res = encodeJPEG(img, &fp, STM32IPL_JPEG_422_SUBSAMPLING, STM32IPL_JPEG_QUALITY);
+	res = encodeJPEG(img, &fp, STM32IPL_JPEG_SUBSAMPLING, STM32IPL_JPEG_QUALITY);
 
 	f_close(&fp);
 
@@ -375,3 +377,6 @@ stm32ipl_err_t saveJPEGSW(const image_t *img, const char *filename)
 #endif /* STM32IPL_ENABLE_HW_JPEG_CODEC */
 #endif /* STM32IPL_ENABLE_JPEG */
 #endif /* STM32IPL_ENABLE_IMAGE_IO */
+
+///@endcond
+
