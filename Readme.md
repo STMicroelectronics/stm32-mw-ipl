@@ -1,4 +1,4 @@
-<img src="_htmresc/st_logo.png" />
+![STMicroelectronics](_htmresc/st_logo.png "STMicroelectronics")
 
 *Copyright &copy; 2021 STMicroelectronics*
 
@@ -33,8 +33,7 @@ The main key characteristics of *STM32IPL* are:
 
 *STM32IPL* is functionally organized in various modules, as depicted in the picture below:
 
-<img src="_htmresc/picture1.png"/>
-
+![STM32IPL modules](_htmresc/picture1.png "STM32IPL modules")
 
 Such modules can be virtually grouped in the following macro groups:
 
@@ -60,7 +59,7 @@ More information on *STM32IPL* functions can be found in *STM32IPL.chm*.
 
 The software architecture of a typical *STM32* application exploiting *STM32IPL* is depicted below.
 
-<img src="_htmresc/picture2.png"/>
+![Typical software architecture](_htmresc/picture2.png "Typical software architecture")
 
 *STM32IPL* is released as open source ***STM32Cube Middleware*** component; basically, all the *STM32IPL* functions are platform independent, with few exceptions:
 
