@@ -269,7 +269,7 @@ stm32ipl_err_t STM32Ipl_GetSimilarity(const image_t *img, const image_t *other, 
 /**
  * @brief Gets some statistics of an image: mean, median, mode, standard deviation, min, max, lower quartile,
  * and upper quartile, calculated for each color channel of the histogram of the image.
- * The supported formats are Binary, Grayscale, RGB565.
+ * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img	Image; if it is not valid, an error is returned.
  * @param out	Statistics for each histogram channel (that is, L for Binary or Grayscale images, LAB for RGB images);
  * if it is not valid, an error is returned.
@@ -303,7 +303,7 @@ stm32ipl_err_t STM32Ipl_GetStatistics(const image_t *img, statistics_t *out, con
  * The linear regression is computed using least-squares normally which is fast, but cannot handle any outlier.
  * If robust is true then the Theil–Sen linear regression is used instead, which computes the median of all slopes
  * between all thresholded pixels in the image.
- * The supported formats are Binary, Grayscale, RGB565.
+ * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img				Image; if it is not valid, an error is returned.
  * @param out				Information about the found line; if it is not valid, an error is returned.
  * @param roi				Optional region of interest of the source image where the functions operates;
