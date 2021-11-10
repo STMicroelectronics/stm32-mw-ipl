@@ -1,3 +1,6 @@
+/**
+ * @file   stm32ipl_imlib.h
+ */
 /*
  * This file is part of the OpenMV project.
  *
@@ -21,7 +24,6 @@
 #include <float.h>
 #include <math.h>
 #include <arm_math.h>
-#include "stm32ipl_mem_alloc.h"
 #include "array.h"
 #include "fmath.h"
 #include "collections.h"
@@ -136,10 +138,10 @@ typedef struct color_thresholds_list_lnk_data
 {
 	uint8_t LMin; /**< Minimum L* (lightness) value. */
 	uint8_t LMax; /**< Maximum L* (lightness) value. */
-	int8_t AMin; /**< Minimum A* (green-red opponent) color value. */
-	int8_t AMax; /**< Maximum A* (green-red opponent) color value. */
-	int8_t BMin; /**< Minimum B* (blue-yellow opponent) color value. */
-	int8_t BMax; /**< Maximum B* (blue-yellow opponent) color value. */
+	int8_t AMin;  /**< Minimum A* (green-red opponent) color value. */
+	int8_t AMax;  /**< Maximum A* (green-red opponent) color value. */
+	int8_t BMin;  /**< Minimum B* (blue-yellow opponent) color value. */
+	int8_t BMax;  /**< Maximum B* (blue-yellow opponent) color value. */
 } color_thresholds_list_lnk_data_t;
 
 /////////////////
@@ -721,8 +723,8 @@ typedef struct cascade
  */
 typedef enum template_match
 {
-	SEARCH_EX, /**< Exhaustive search */
-	SEARCH_DS, /**< Diamond search */
+	SEARCH_EX, /**< Exhaustive search. */
+	SEARCH_DS, /**< Diamond search. */
 } template_match_t;
 
 /**

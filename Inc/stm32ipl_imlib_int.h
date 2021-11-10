@@ -12,6 +12,8 @@
 #ifndef __STM32IPL_IMLIB_INT_H__
 #define __STM32IPL_IMLIB_INT_H__
 
+#include "stm32ipl_mem_alloc.h"	// STM32IPL
+
 ///@cond
 
 #ifndef M_PI				// STM32IPL

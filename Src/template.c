@@ -20,8 +20,6 @@
 #include "imlib.h"
 #ifndef STM32IPL
 #include "xalloc.h"
-#else // STM32IPL
-#include "stm32ipl_mem_alloc.h"
 #endif // STM32IPL
 
 static void set_dsp(int cx, int cy, point_t *pts, bool sdsp, int step)
