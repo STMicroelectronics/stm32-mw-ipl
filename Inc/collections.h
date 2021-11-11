@@ -37,6 +37,10 @@ bool bitmap_bit_get(bitmap_t *ptr, size_t index);
 //////////
 // lifo //
 //////////
+/* STM32IPL
+ * These lifo functions are for library internals only.
+ * Do not use at application side!
+ */
 
 typedef struct lifo
 {
@@ -61,6 +65,11 @@ void lifo_peek(lifo_t *ptr, void *data);
 // fifo //
 //////////
 
+/* STM32IPL
+ * These fifo functions are for library internals only.
+ * Do not use at application side!
+ */
+
 typedef struct fifo
 {
     size_t head_ptr, tail_ptr, len, size, data_len;
@@ -83,6 +92,10 @@ void fifo_peek(fifo_t *ptr, void *data);
 //////////
 // list //
 //////////
+
+/* STM32IPL
+ * These list functions can be used at application side.
+ */
 
 typedef struct list_lnk
 {
@@ -119,6 +132,10 @@ void list_set(list_t *ptr, void *data, size_t index);
 //////////////
 // iterator //
 //////////////
+
+/* STM32IPL
+ * These iterator functions can be used at application side.
+ */
 
 list_lnk_t *iterator_start_from_head(list_t *ptr);
 list_lnk_t *iterator_start_from_tail(list_t *ptr);

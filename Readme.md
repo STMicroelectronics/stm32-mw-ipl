@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This document is a quick guide that introduces ***STM32 Image Processing Library*** and provides advises about the preparation and the usage of the *STM32 Image Processing Library* in real applications.
+This document is a quick guide that introduces ***STM32 Image Processing Library*** and provides advise about the preparation and the usage of the *STM32 Image Processing Library* in real applications.
 
 *STM32 Image Processing Library* (in short, ***STM32IPL***) is a C software library for ***STMicroelectronics STM32 MCUs*** that provides specific functionalities that help the development of visual analysis applications.
 
@@ -21,7 +21,7 @@ Please, note that this document does not contain detailed specifications of the 
 
 ## Main characteristics
 
-*STM32IPL* is an open source software library, written in C, that offers image processing and computer vision functionalities for a faster development of visual analysis applications on ***STM32*** microcontrollers.
+*STM32IPL* is an open-source software library, written in C, that offers image processing and computer vision functionalities for a faster development of visual analysis applications on ***STM32*** microcontrollers.
 
 The main key characteristics of *STM32IPL* are:
 
@@ -63,9 +63,9 @@ The software architecture of a typical *STM32* application exploiting *STM32IPL*
 
 *STM32IPL* is released as open source ***STM32Cube Middleware*** component; basically, all the *STM32IPL* functions are platform independent, with few exceptions:
 
--   The I/O functions that perform reading/writing operation on files, in particular, the two read/write functions that handle the supported image file formats as *BMP* (*Windows Bitmap*), *PPM* (*Portable PixMap*), *PGM* (*Portable GreyMap*), and *JPEG*: these functions depend on the following third party open source libraries that are part of the set of *STM32Cube Middleware* components:
+-   The I/O functions that perform reading/writing operation on files, in particular, the two read/write functions that handle the supported image file formats as *BMP* (*Windows Bitmap*), *PPM* (*Portable PixMap*), *PGM* (*Portable GreyMap*), and *JPEG*: these functions depend on the following third-party open source libraries that are part of the set of *STM32Cube Middleware* components:
 
-    -   ***FatFs***, that offers read/write operations on a *FatFS* file system (which can be, for example, mounted on an SD card)
+    -   ***FatFs***, that offers read/write operations on a *FatFS* file system (which can be, for example, mounted on an microSD card)
 
     -   ***LibJPEG***, that offers *JPEG* encoding and decoding functionalities
 
@@ -83,7 +83,7 @@ This section describes the basic steps needed to develop an *STM32* application 
 
 ### Setting the project properties
 
-First of all, it is necessary to add the *STM32_ImageProcessing_Library/Inc* folder to the list of the include directories of the application project.
+As first step, it is necessary to add the *STM32_ImageProcessing_Library/Inc* folder to the list of the include directories of the application project.
 
 Then, it is necessary to add `STM32IPL` to the list of define symbols of the compiler pre-processor.
 
@@ -226,18 +226,25 @@ So, in general, it is up to the developer to read the documentation to understan
 
 As soon as the *STM32IPL* is not needed anymore, the user can call `STM32Ipl_DeInitLib()` to release the whole memory block reserved at the beginning, so that it can be made available for further usages.
 
-## Example
+### Containers
 
-This section shows a simple example that uses *STM32IPL* to:
+*STM32IPL* uses two types of containers to store complex data: **list** and **array**. These containers are used as arguments to some *STM32IPL* functions, sometimes as input and sometimes as output parameters. In the following *Examples* section some handy examples that explain how to use such containers are reported.
+
+## Examples
+
+This section shows simple practical examples explaining how to use *STM32IPL* to develop applications. Such examples assume that *STM32IPL* has been properly initialized as explained in the section *Initialization of the library* above.
+
+The examples below typically read image from files, so it is assumed that the user has properly initialized and mounted the *FatFs* file system, for instance on a microSD card, as the pertinent source code is not included here.
+
+### Resize
+
+This example explains how to:
 
 - read an image
-- resize it to a destination image
+- resize it to a smaller destination image
 - show both images to the screen
 
 ```c
-/*
-* This example shows how to resize a source image to a smaller destination image.
-*/
 void Resize(void)
 {
 	image_t srcImg; // Source image.
@@ -252,7 +259,8 @@ void Resize(void)
 
 		// Allocate memory to the destination image.
 		// The destination image must have the same format as the source image.
-		if (stm32ipl_err_Ok == STM32Ipl_AllocData(&dstImg, dstWidth, dstHeight, image_bpp_t)srcImg.bpp)) {
+		if (stm32ipl_err_Ok == STM32Ipl_AllocData(&dstImg, dstWidth, dstHeight,
+                                                  image_bpp_t)srcImg.bpp)) {
 			// Resize the source image and store the results into the destination image.
 			if (stm32ipl_err_Ok == STM32Ipl_Resize(&srcImg, &dstImg, NULL)) {
 				// Display the destination image on the screen (right side).
@@ -269,3 +277,187 @@ void Resize(void)
 }
 ```
 
+### Face Detection
+
+This example explains how to:
+
+- read an image
+- detect the faces in the image
+- use an array container to get the results (detected faces)
+- draw the bounding boxes of the faces in the image
+- show the image with the bounding boxes of the detected faces on the screen
+
+```c
+void FaceDetection(void)
+{
+	image_t img;
+	cascade_t cascade;			// The cascade structure used by the object detector.
+	uint16_t thickness = 2;		// Set the thickness of the rectangle (pixels).
+	bool fill = false;			// Avoid to fill the rectangle.
+	float scaleFactor = 1.25f;	// Modify this value to detect objects at 
+								// different scale (must be > 1.0f).
+	float threshold = 0.75f;	// Modify this value to tune the detection rate against
+    							// the false positive rate (0.0f - 1.0f).
+	
+	// Load face cascade.
+    if (stm32ipl_err_Ok == STM32Ipl_LoadFaceCascade(&cascade)) {
+		// Load an image from file system.
+		if (stm32ipl_err_Ok == STM32Ipl_ReadImage(&img, "myImage.bmp")) {
+			uint32_t faceCount;
+			array_t *faces = 0;
+
+			// Detect faces. No ROI is passed, so the full image is analyzed.
+			if (stm32ipl_err_Ok == STM32Ipl_DetectObject(&img, &faces, NULL, &cascade, 
+                                                         scaleFactor, threshold)) {
+
+				// Get the number of detected faces.
+				faceCount = array_length(faces);
+
+				// Get the bounding box for each detected face.
+				for (int i = 0; i < faceCount; i++) {
+					rectangle_t *r = array_at(faces, i);
+
+					// Draw the bounding box around each detected face.
+					STM32Ipl_DrawRectangle(&img, r->x, r->y, r->w, r->h, 	
+                                           STM32IPL_COLOR_GREEN, thickness, fill);
+				}
+
+				// Release the array containing the faces.
+				array_free(faces);
+				faces = NULL;
+			}
+
+			// Display the image with the bounding boxes of the detected face 
+			// on the top-left corner of the screen.
+			STM32Ipl_DrawScreen_DMA2D(&img, 0, 0);
+
+			// Release the memory buffer containing the source data image.
+			STM32Ipl_ReleaseData(&img);
+        }
+    }
+}
+```
+
+### Binarization
+
+This example explains how to:
+
+- read an image
+- use a list container to set the proper thresholds needed for the binarization
+- execute the binarization
+- show the binary image on the screen
+
+```c
+void Binarization(void)
+{
+	image_t img;
+	list_t thresholds;		// List of LAB thresholds used to binarize the image.
+	color_thresholds_list_lnk_data_t colorTh;	// Structure used to set the thresholds.
+	bool invert = false; 	// Take the values inside the threshold bounds.
+	bool zero = false;		// The thresholded pixels in the destination image
+    						// are set to 1, the others to 0.
+
+    // Set the thresholds on LAB channels.
+    colorTh.LMin = 0;
+    colorTh.LMax = 100;
+    colorTh.AMin = 0;
+    colorTh.AMax = 127;
+    colorTh.BMin = 0;
+    colorTh.BMax = 127;
+
+    // Init the list so that each element has the right size.
+    list_init(&thresholds, sizeof(color_thresholds_list_lnk_data_t));
+
+    // Push the thresholds used to binarize the image into the list.
+    list_push_back(&thresholds, &colorTh);
+
+    // Read the image from file system.
+    if (stm32ipl_err_Ok == STM32Ipl_ReadImage(&img, "myImage.bmp")) {
+
+        // Display the image on the screen (left side).
+        STM32Ipl_DrawScreen_DMA2D(&img, 0, 0);
+
+        // Execute the binarization. In this case, source and destination are the same,
+        // so the source image is overwritten with the binarized image; no mask is used.
+        if (stm32ipl_err_Ok == STM32Ipl_Binary(&img, &img, &thresholds,
+                                               invert, zero, NULL)) {
+            // Display the modified image on the screen (left side).
+            STM32Ipl_DrawScreen_DMA2D(&img, 400, 0);
+        }
+
+        // Release the image data buffer.
+        STM32Ipl_ReleaseData(&img);
+    }
+
+    // Finally, release the memory allocated to the list.
+    list_free(&thresholds);
+}
+```
+### Find circles
+
+This example explains how to:
+
+- read an image
+- find circles in the image using the Hough transform
+- use a list container to get the circles found
+- draw the circles on the image
+- show the image with the circles on the screen
+
+
+```c
+void FindCircle(void)
+{
+	image_t img;
+	list_t circles;				// List of circles found.
+	uint16_t thickness = 2;		// Set the thickness of the circles (pixels).
+	bool fill = false;			// Avoid to fill the circle.
+	uint32_t xStride = 2;		// Number of pixels to be skipped horizontally.
+	uint32_t yStride = 2;		// Number of pixels to be skipped vertically.
+	uint32_t threshold = 2000;	// Magnitude threshold; only circles with magnitude
+    							// greater than or equal to such threshold are returned.
+	uint32_t xMargin = 10;		// Circles having horizontal distance between their
+    							// centers less than this value are merged.
+	uint32_t yMargin = 10;		// Circles having vertical distance between their centers
+    							// less than this value are merged.
+	uint32_t rMargin = 30;		// Circles having difference between their radius less
+    							// than this value are merged.
+	uint32_t rMin = 18;			// Minimum circle radius detected; increase it to speed 
+    							// up the execution.
+	uint32_t rMax = 50;			// Maximum circle radius detected; decrease it to speed 
+    							// up the execution.
+	uint32_t rStep = 2;			// Radius step value.
+	
+     // Read the image from file system.
+	if (stm32ipl_err_Ok == STM32Ipl_ReadImage(&img, "myImage.bmp")) {
+
+        // Search for the circles in the full image (no ROI is used)
+        if (stm32ipl_err_Ok == STM32Ipl_FindCircles(&img, &circles, NULL,
+                xStride, yStride, threshold,
+                xMargin, yMargin, rMargin,
+                rMin, rMax, rStep)) {
+
+            // Cycle through the circles found.
+            while (list_size(&circles)) {
+                find_circles_list_lnk_data_t circle;
+
+                // Pop the first circle in the list.
+                list_pop_front(&circles, &circle);
+
+                // Now the list has one element less.
+
+                // Draw the circle on the image
+                STM32Ipl_DrawCircle(&img, circle.p.x, circle.p.y, circle.r, 
+                                    TM32IPL_COLOR_GREEN, thickness, fill);
+            }
+
+            // Now the list is empty, so it is not necessary to free it.
+        }
+
+        // Display the image on the screen.
+        STM32Ipl_DrawScreen_DMA2D(&img, 0, 0);
+
+        // Release the image data buffer.
+        STM32Ipl_ReleaseData(&img);
+    }
+}
+```

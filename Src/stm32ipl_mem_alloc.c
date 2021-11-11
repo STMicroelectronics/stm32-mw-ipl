@@ -241,7 +241,7 @@ void* fb_alloc0(uint32_t size, int hints)
 }
 
 /*
- * @brief Allocates a biggest memory buffer from the fb stack.
+ * @brief Allocates the biggest memory buffer from the fb stack.
  * Such buffer must be released with fb_free().
  * @param size	Used to return the size of the allocated memory buffer (bytes).
  * @param hints	Argument not used.

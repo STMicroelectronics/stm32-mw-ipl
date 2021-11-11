@@ -21,6 +21,10 @@ typedef struct {
     void **data;
     array_dtor_t dtor;
 } array_t;
+
+/* STM32IPL
+ * These array functions can be used at application side.
+ */
 void array_alloc(array_t **a, array_dtor_t dtor);
 void array_alloc_init(array_t **a, array_dtor_t dtor, int size);
 void array_clear(array_t *array);

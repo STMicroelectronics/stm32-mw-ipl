@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file   stm32ipl_mem_alloc.h
  * @author SRA AI Application Team
- * @brief  STM32 Image Processing Library - memory allocation wrapper header file
+ * @brief  STM32 Image Processing Library - memory allocation header file
  ******************************************************************************
  * @attention
  *
