@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 ///@cond
-#define FB_ALLOC_MAX_ENTRY		1000	/* Max number of entries managed with fb_alloc. */
+#define FB_ALLOC_MAX_ENTRY		64	/* Max number of entries managed with fb_alloc. */
 
 static uint32_t g_fb_alloc_stack[FB_ALLOC_MAX_ENTRY];
 static uint32_t g_fb_alloc_inext = 0;

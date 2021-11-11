@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifndef STM32IPL
 ////////////
 // bitmap //
 ////////////
@@ -31,6 +32,7 @@ void bitmap_bit_set(bitmap_t *ptr, size_t index);
 bool bitmap_bit_get(bitmap_t *ptr, size_t index);
 #define BITMAP_COMPUTE_ROW_INDEX(image, y) (((image)->w)*(y))
 #define BITMAP_COMPUTE_INDEX(row_index, x) ((row_index)+(x))
+#endif // STM32IPL
 
 //////////
 // lifo //
