@@ -154,6 +154,7 @@ void imlib_gamma_corr(image_t *img, float gamma, float contrast, float brightnes
     }
 }
 
+#ifndef STM32IPL
 void imlib_negate(image_t *img)
 {
     switch(img->bpp) {
@@ -207,6 +208,7 @@ void imlib_negate(image_t *img)
         }
     }
 }
+#endif // STM32IPL
 
 typedef struct imlib_replace_line_op_state {
     bool hmirror, vflip, transpose;
