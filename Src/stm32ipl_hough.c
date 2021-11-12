@@ -27,7 +27,7 @@ extern "C" {
  * @brief Finds all infinite lines in the image using the Hough transform. Returns a list of lines ().
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img			Image; if it is not valid, an error is returned.
- * @param out			List of lines found. The type of results is find_lines_list_lnk_data_t.
+ * @param out			List of find_lines_list_lnk_data_t objects representing the lines found.
  * @param roi			Optional region of interest of the source image where the functions operates;
  * when defined, it must be contained in the source image and have positive dimensions, otherwise
  * an error is returned; when not defined, the whole image is considered.
@@ -65,7 +65,7 @@ stm32ipl_err_t STM32Ipl_FindLines(const image_t *img, list_t *out, const rectang
  * @param roi			Optional region of interest of the source image where the functions operates;
  * when defined, it must be contained in the source image and have positive dimensions, otherwise
  * an error is returned; when not defined, the whole image is considered.
- * @param out			List of circles found. The type of results is find_circles_list_lnk_data_t.
+ * @param out			List of find_circles_list_lnk_data_t objects representing the circles found.
  * @param xStride 		Number of x pixels to skip when doing the Hough transform. Only increase this if circles you are searching for are large and bulky.
  * @param yStride 		Number of y pixels to skip when doing the Hough transform. Only increase this if circles you are searching for are large and bulky.
  * @param threshold		Only circles with a magnitude greater than or equal to threshold are returned.

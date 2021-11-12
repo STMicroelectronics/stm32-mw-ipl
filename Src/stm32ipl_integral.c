@@ -39,7 +39,7 @@ stm32ipl_err_t STM32Ipl_IIAllocData(i_image_t *iimg, uint32_t width, uint32_t he
 
 	STM32IPL_CHECK_VALID_IMAGE(iimg)
 
-	data = fb_alloc(width * height * sizeof(uint32_t), FB_ALLOC_NO_HINT);
+	data = xalloc(width * height * sizeof(uint32_t));
 	if (!data) {
 		iimg->w = 0;
 		iimg->h = 0;
@@ -61,7 +61,8 @@ stm32ipl_err_t STM32Ipl_IIAllocData(i_image_t *iimg, uint32_t width, uint32_t he
  */
 void STM32Ipl_IIReleaseData(i_image_t *iimg)
 {
-	fb_free();
+	if (iimg)
+		xfree(iimg->data);
 }
 
 /**

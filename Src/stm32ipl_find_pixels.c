@@ -75,10 +75,10 @@ stm32ipl_err_t STM32Ipl_GetPixel(const image_t *img, uint16_t x, uint16_t y, stm
  * @brief Finds minimum and maximum point locations in an image. For RGB images, the Y value is considered.
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img		Image; if it is not valid, an error is returned.
- * @param outMin	List of points that represents the coordinates of minimum values; if it is not
- * valid, an error is returned.
- * @param outMax	List of points that represents the coordinates of maximum values; if it is not
- * valid, an error is returned.
+ * @param outMin	List of point_t elements that represents the coordinates of the minimum values;
+ * if it is not valid, an error is returned.
+ * @param outMax	List of point_t elements that represents the coordinates of maximum values;
+ * if it is not valid, an error is returned.
  * @param roi		Optional region of interest of the source image where the functions operates;
  * when defined, it must be contained in the source image and have positive dimensions, otherwise
  * an error is returned; when not defined, the whole image is considered.
@@ -406,7 +406,7 @@ stm32ipl_err_t STM32Ipl_FindMinMaxLoc(const image_t *img, list_t *outMin, list_t
  * @brief Finds the locations of non zero pixels in an image.
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
  * @param img		Image; if it is not valid, an error is returned.
- * @param out		List of points that represents the coordinates of the non zero pixels;
+ * @param out		List of point_t elements that represents the coordinates of the non zero pixels;
  * if it is not valid, an error is returned.
  * @param roi		Optional region of interest of the source image where the functions operates;
  * when defined, it must be contained in the source image and have positive dimensions, otherwise

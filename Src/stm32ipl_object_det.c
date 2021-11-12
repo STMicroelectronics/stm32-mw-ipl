@@ -60,7 +60,7 @@ stm32ipl_err_t STM32Ipl_LoadEyeCascade(cascade_t *cascade)
 
 /**
  * @brief Detects objects, described by the given cascade. The detected object are stored in an array_t
- * structure containing the bounding boxes (rectangle_t) one for each object detected; the caller is
+ * structure containing the bounding boxes (rectangle_t), one for each object detected; the caller is
  * responsible to release the array. The supported formats are Grayscale, RGB565, RGB888.
  * @param img			Image; if it is not valid, an error is returned.
  * @param out			Pointer to pointer to the array structure that will contain the detected objects.
