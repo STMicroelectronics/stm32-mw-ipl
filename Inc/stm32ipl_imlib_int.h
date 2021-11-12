@@ -247,6 +247,9 @@ void imlib_find_circles(list_t *out, image_t *ptr, rectangle_t *roi, unsigned in
 bool stm32ipl_get_regression_points(const point_t *points, uint16_t nPoints, find_lines_list_lnk_data_t *out,
 		bool robust); // STM32IPL
 
+// STM32IPL: added prototypes.
+void merge_alot(list_t *out, int threshold, int theta_threshold);
+size_t trace_line(image_t *ptr, line_t *l, int *theta_buffer, uint32_t *mag_buffer, point_t *point_buffer);
 /// @endcond
 
 #endif //__STM32IPL_IMLIB_INT_H__

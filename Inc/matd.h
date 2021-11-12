@@ -93,12 +93,12 @@ static inline float sgn(float v)
 }
 
 // random number between [0, 1)
-static inline float randf()
+static inline float randf(void)
 {
 	return ((float)rand()) / (RAND_MAX + 1.0);
 }
 
-static inline float signed_randf()
+static inline float signed_randf(void)
 {
 	return randf() * 2 - 1;
 }

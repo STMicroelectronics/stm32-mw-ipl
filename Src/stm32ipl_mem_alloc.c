@@ -36,6 +36,10 @@ static uint32_t g_fb_alloc_inext = 0;
 static uint32_t g_fb_alloc_imark = 0;
 
 /* Prototypes. */
+void* STM32Ipl_Alloc(uint32_t size);
+void* STM32Ipl_Alloc0(uint32_t size);
+void STM32Ipl_Free(void *mem);
+void* STM32Ipl_Realloc(void *mem, uint32_t size);
 __attribute__((weak)) void STM32Ipl_FaultHandler(const char *error);
 ///@endcond
 

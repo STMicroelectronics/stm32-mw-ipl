@@ -12,6 +12,10 @@
 #include "imlib.h"
 
 #ifdef IMLIB_ENABLE_GET_SIMILARITY
+
+/* Prototypes. */
+void imlib_similarity_line_op(image_t *img, int line, void *other, void *data, bool vflipped);  // STM32IPL
+
 typedef struct imlib_similatiry_line_op_state {
     int *sumBucketsOfX, *sumBucketsOfY, *sum2BucketsOfX, *sum2BucketsOfY, *sum2Buckets;
     float similarity_sum, similarity_sum_2, similarity_min, similarity_max;
