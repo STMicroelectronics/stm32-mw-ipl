@@ -125,8 +125,8 @@ stm32ipl_err_t STM32Ipl_Resize(const image_t *src, image_t *dst, const rectangle
 	int32_t srcH;
 	int32_t dstW;
 	int32_t dstH;
-	float wRatio;
-	float hRatio;
+	int32_t wRatio;
+	int32_t hRatio;
 
 	STM32IPL_CHECK_VALID_IMAGE(src)
 	STM32IPL_CHECK_VALID_IMAGE(dst)
@@ -153,50 +153,50 @@ stm32ipl_err_t STM32Ipl_Resize(const image_t *src, image_t *dst, const rectangle
 		STM32Ipl_RectCopy((rectangle_t*)roi, &srcRoi);
 	}
 
-	wRatio = (float)srcRoi.w / dstW;
-	hRatio = (float)srcRoi.h / dstH;
+	wRatio = (int32_t) ((roi->w << 16) / dst->w) + 1;
+	hRatio = (int32_t) ((roi->h << 16) / dst->h) + 1;
 
 	switch (src->bpp) {
 		case IMAGE_BPP_BINARY:
 			for (uint32_t y = 0; y < dstH; y++) {
-				uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio) + srcRoi.y);
+				uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, ((y * hRatio) >> 16) + srcRoi.y);
 				uint32_t *dstRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(dst, y);
 
 				for (uint32_t x = 0; x < dstW; x++)
 					IMAGE_PUT_BINARY_PIXEL_FAST(dstRow, x,
-							IMAGE_GET_BINARY_PIXEL_FAST(srcRow, fast_floorf(x * wRatio) + srcRoi.x));
+							IMAGE_GET_BINARY_PIXEL_FAST(srcRow, ((x * wRatio) >> 16) + srcRoi.x));
 			}
 			break;
 
 		case IMAGE_BPP_GRAYSCALE:
 			for (uint32_t y = 0; y < dstH; y++) {
-				uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio) + srcRoi.y);
+				uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, ((y * hRatio) >> 16) + srcRoi.y);
 				uint8_t *dstRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(dst, y);
 
 				for (uint32_t x = 0; x < dstW; x++)
 					IMAGE_PUT_GRAYSCALE_PIXEL_FAST(dstRow, x,
-							IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, fast_floorf(x * wRatio) + srcRoi.x));
+							IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, ((x * wRatio) >> 16) + srcRoi.x));
 			}
 			break;
 
 		case IMAGE_BPP_RGB565:
 			for (uint32_t y = 0; y < dstH; y++) {
-				uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio) + srcRoi.y);
+				uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, ((y * hRatio) >> 16) + srcRoi.y);
 				uint16_t *dstRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(dst, y);
 
 				for (uint32_t x = 0; x < dstW; x++)
 					IMAGE_PUT_RGB565_PIXEL_FAST(dstRow, x,
-							IMAGE_GET_RGB565_PIXEL_FAST(srcRow, fast_floorf(x * wRatio) + srcRoi.x));
+							IMAGE_GET_RGB565_PIXEL_FAST(srcRow, ((x * wRatio) >> 16) + srcRoi.x));
 			}
 			break;
 
 		case IMAGE_BPP_RGB888:
 			for (uint32_t y = 0; y < dstH; y++) {
-				rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio) + srcRoi.y);
+				rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, ((y * hRatio) >> 16) + srcRoi.y);
 				rgb888_t *dstRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(dst, y);
 				for (uint32_t x = 0; x < dstW; x++)
 					IMAGE_PUT_RGB888_PIXEL_FAST(dstRow, x,
-							IMAGE_GET_RGB888_PIXEL_FAST(srcRow, fast_floorf(x * wRatio) + srcRoi.x));
+							IMAGE_GET_RGB888_PIXEL_FAST(srcRow, ((x * wRatio) >> 16) + srcRoi.x));
 			}
 			break;
 
@@ -223,8 +223,8 @@ stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst, bool reverse
 {
 	int32_t dstW;
 	int32_t dstH;
-	float wRatio;
-	float hRatio;
+	int32_t wRatio;
+	int32_t hRatio;
 
 	STM32IPL_CHECK_VALID_IMAGE(src)
 	STM32IPL_CHECK_VALID_IMAGE(dst)
@@ -237,53 +237,53 @@ stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst, bool reverse
 	dstW = dst->w;
 	dstH = dst->h;
 
-	wRatio = (float)src->w / dstW;
-	hRatio = (float)src->h / dstH;
+	wRatio = (int32_t) ((src->w << 16) / dst->w) + 1;
+	hRatio = (int32_t) ((src->h << 16) / dst->h) + 1;
 
 	if (reversed) {
 		switch (src->bpp) {
 			case IMAGE_BPP_BINARY:
 				for (int32_t y = dstH - 1; y >= 0; y--) {
-					uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					uint32_t *dstRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(dst, y);
 
 					for (int32_t x = dstW - 1; x >= 0; x--)
 						IMAGE_PUT_BINARY_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_BINARY_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_BINARY_PIXEL_FAST(srcRow, (x * wRatio) >> 16));
 				}
 				break;
 
 			case IMAGE_BPP_GRAYSCALE:
 				for (int32_t y = dstH - 1; y >= 0; y--) {
-					uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					uint8_t *dstRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(dst, y);
 
 					for (int32_t x = dstW - 1; x >= 0; x--)
 						IMAGE_PUT_GRAYSCALE_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, (x * wRatio)) >> 16);
 				}
 				break;
 
 			case IMAGE_BPP_RGB565:
 				for (int32_t y = dstH - 1; y >= 0; y--) {
-					uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					uint16_t *dstRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(dst, y);
 
 					for (int x = dstW - 1; x >= 0; x--)
 						IMAGE_PUT_RGB565_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_RGB565_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_RGB565_PIXEL_FAST(srcRow, (x * wRatio) >> 16));
 				}
 
 				break;
 
 			case IMAGE_BPP_RGB888:
 				for (int32_t y = dstH - 1; y >= 0; y--) {
-					rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					rgb888_t *dstRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(dst, y);
 
 					for (int x = dstW - 1; x >= 0; x--)
 						IMAGE_PUT_RGB888_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_RGB888_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_RGB888_PIXEL_FAST(srcRow, (x * wRatio) >> 16));
 				}
 				break;
 
@@ -294,46 +294,46 @@ stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst, bool reverse
 		switch (src->bpp) {
 			case IMAGE_BPP_BINARY:
 				for (int32_t y = 0; y < dstH; y++) {
-					uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint32_t *srcRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					uint32_t *dstRow = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(dst, y);
 
 					for (int32_t x = 0; x < dstW; x++)
 						IMAGE_PUT_BINARY_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_BINARY_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_BINARY_PIXEL_FAST(srcRow, (x * wRatio) >> 16));
 				}
 				break;
 
 			case IMAGE_BPP_GRAYSCALE:
 				for (int32_t y = 0; y < dstH; y++) {
-					uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint8_t *srcRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					uint8_t *dstRow = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(dst, y);
 
 					for (int32_t x = 0; x < dstW; x++)
 						IMAGE_PUT_GRAYSCALE_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_GRAYSCALE_PIXEL_FAST(srcRow, (x * wRatio) >> 16));
 				}
 				break;
 
 			case IMAGE_BPP_RGB565:
 				for (int32_t y = 0; y < dstH; y++) {
-					uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					uint16_t *srcRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					uint16_t *dstRow = IMAGE_COMPUTE_RGB565_PIXEL_ROW_PTR(dst, y);
 
 					for (int32_t x = 0; x < dstW; x++)
 						IMAGE_PUT_RGB565_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_RGB565_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_RGB565_PIXEL_FAST(srcRow, (x * wRatio) >> 16));
 				}
 
 				break;
 
 			case IMAGE_BPP_RGB888:
 				for (int32_t y = 0; y < dstH; y++) {
-					rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, fast_floorf(y * hRatio));
+					rgb888_t *srcRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(src, (y * hRatio) >> 16);
 					rgb888_t *dstRow = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(dst, y);
 
 					for (int32_t x = 0; x < dstW; x++)
 						IMAGE_PUT_RGB888_PIXEL_FAST(dstRow, x,
-								IMAGE_GET_RGB888_PIXEL_FAST(srcRow, fast_floorf(x * wRatio)));
+								IMAGE_GET_RGB888_PIXEL_FAST(srcRow, (x * wRatio) >> 16));
 				}
 				break;
 
