@@ -11,6 +11,9 @@
 #include "imlib.h"
 
 #ifdef IMLIB_ENABLE_MATH_OPS
+#ifdef IPL_MATOP_HAS_MVE
+#include "mve_matop.h"
+#endif
 void imlib_gamma_corr(image_t *img, float gamma, float contrast, float brightness)
 {
     gamma = IM_DIV(1.0f, gamma);	// STM32IPL: f added to the constant.
@@ -890,6 +893,9 @@ static void imlib_difference_line_op(image_t *img, int line, void *other, void *
             break;
         }
         case IMAGE_BPP_GRAYSCALE: {
+#ifdef IPL_MATOP_HAS_MVE
+            mve_imlib_difference_line_op_grayscale(img, line, other, mask);
+#else
             uint8_t *data = IMAGE_COMPUTE_GRAYSCALE_PIXEL_ROW_PTR(img, line);
             for (int i = 0, j = img->w; i < j; i++) {
                 if ((!mask) || image_get_mask_pixel(mask, i, line)) {
@@ -899,6 +905,7 @@ static void imlib_difference_line_op(image_t *img, int line, void *other, void *
                     IMAGE_PUT_GRAYSCALE_PIXEL_FAST(data, i, p);
                 }
             }
+#endif
             break;
         }
         case IMAGE_BPP_RGB565: {
@@ -916,6 +923,9 @@ static void imlib_difference_line_op(image_t *img, int line, void *other, void *
             break;
         }
 		case IMAGE_BPP_RGB888: {  // STM32IPL
+#ifdef IPL_MATOP_HAS_MVE
+            mve_imlib_difference_line_op_rgb888(img, line, other, mask);
+#else
 			rgb888_t *data = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(img, line);
 			for (int i = 0, j = img->w; i < j; i++) {
 				if ((!mask) || image_get_mask_pixel(mask, i, line)) {
@@ -928,6 +938,7 @@ static void imlib_difference_line_op(image_t *img, int line, void *other, void *
 					IMAGE_PUT_RGB888_PIXEL_FAST(data, i, pixel888);
 				}
 			}
+#endif
 			break;
 		}
 

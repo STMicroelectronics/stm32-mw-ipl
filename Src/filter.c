@@ -10,6 +10,10 @@
  */
 // STM32IPL		#include "fsort.h"
 #include "imlib.h"
+#include "filter_int.h"
+#ifdef IPL_FILTER_HAS_MVE
+#include "mve_filter.h"
+#endif
 
 void imlib_histeq(image_t *img, image_t *mask)
 {
@@ -483,29 +487,6 @@ void imlib_mean_filter(image_t *img, const int ksize, bool threshold, int offset
 #endif // IMLIB_ENABLE_MEAN
 
 #ifdef IMLIB_ENABLE_MEDIAN
-static uint8_t hist_median(uint8_t *data, int len, const int cutoff)
-{
-int i;
-#if defined(ARM_MATH_CM7) || defined(ARM_MATH_CM4)
-uint32_t oldsum=0, sum32 = 0;
-
-    for (i=0; i<len; i+=4) { // work 4 at time with SIMD
-        sum32 = __USADA8(*(uint32_t *)&data[i], 0, sum32);
-        if (sum32 >= cutoff) { // within this group
-            while (oldsum < cutoff && i < len)
-                oldsum += data[i++];
-            break;
-        } // if we're at the last 4 values
-        oldsum = sum32;
-    } // for each group of 4 elements
-#else // generic C version
-int sum = 0;
-    for (i=0; i<len && sum < cutoff; i++) {
-        sum += data[i];
-    }
-#endif
-    return i-1;
-} /* hist_median() */
 
 void imlib_median_filter(image_t *img, const int ksize, float percentile, bool threshold, int offset, bool invert, image_t *mask)
 {
@@ -581,6 +562,9 @@ void imlib_median_filter(image_t *img, const int ksize, float percentile, bool t
             break;
         }
         case IMAGE_BPP_GRAYSCALE: {
+#ifdef IPL_FILTER_HAS_MVE
+            mve_imlib_median_filter_grayscale(img, ksize, percentile, threshold, offset, invert, mask);
+#else
             buf.data = fb_alloc(IMAGE_GRAYSCALE_LINE_LEN_BYTES(img) * brows, FB_ALLOC_NO_HINT);
             uint8_t *data = fb_alloc(64, FB_ALLOC_NO_HINT);
             uint8_t pixel;
@@ -646,6 +630,7 @@ void imlib_median_filter(image_t *img, const int ksize, float percentile, bool t
 
             fb_free();
             fb_free();
+#endif
             break;
         }
         case IMAGE_BPP_RGB565: {

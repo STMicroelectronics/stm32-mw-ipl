@@ -1,3 +1,20 @@
+/**
+  ******************************************************************************
+  * @file    lab_tab.c
+  * @author  MDG Application Team
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+
 #include <stdint.h>
 const int8_t lab_table[98304] = {
     0,    0,   -1,     0,    3,   -9,     1,    8,  -21,     2,   16,  -31,

@@ -9,7 +9,9 @@
  * Binary image operations.
  */
 #include "imlib.h"
-
+#ifdef IPL_BINARY_HAS_MVE
+#include "mve_binary.h"
+#endif
 #ifdef IMLIB_ENABLE_BINARY_OPS
 void imlib_binary(image_t *out, image_t *img, list_t *thresholds, bool invert, bool zero, image_t *mask)
 {
@@ -18,8 +20,17 @@ void imlib_binary(image_t *out, image_t *img, list_t *thresholds, bool invert, b
     bmp.h = img->h;
     bmp.bpp = IMAGE_BPP_BINARY;
     bmp.data = fb_alloc0(image_size(&bmp), FB_ALLOC_NO_HINT);
-
-    for (list_lnk_t *it = iterator_start_from_head(thresholds); it; it = iterator_next(it)) {
+    list_lnk_t *it = iterator_start_from_head(thresholds);
+#ifdef IPL_BINARY_HAS_MVE
+    if (NULL == iterator_next(it) && (IMAGE_BPP_GRAYSCALE == img->bpp)) {
+        color_thresholds_list_lnk_data_t lnk_data;
+        iterator_get(thresholds, it, &lnk_data);
+        mve_imlib_binary_grayscale(out, img, &lnk_data, invert, zero, mask);
+        fb_free(); /* bmp.data */
+        return;
+    }
+#endif
+    for (; it; it = iterator_next(it)) {
         color_thresholds_list_lnk_data_t lnk_data;
         iterator_get(thresholds, it, &lnk_data);
         switch(img->bpp) {
@@ -997,6 +1008,9 @@ static void imlib_erode_dilate(image_t *img, int ksize, int threshold, int e_or_
             break;
         }
         case IMAGE_BPP_GRAYSCALE: {
+#ifdef IPL_BINARY_HAS_MVE
+            mve_imlib_erode_dilate_grayscale(img, ksize, threshold, e_or_d, mask);
+#else
             buf.data = fb_alloc(IMAGE_GRAYSCALE_LINE_LEN_BYTES(img) * brows, FB_ALLOC_NO_HINT);
 
             for (int y = 0, yy = img->h; y < yy; y++) {
@@ -1058,6 +1072,7 @@ static void imlib_erode_dilate(image_t *img, int ksize, int threshold, int e_or_
             }
 
             fb_free();
+#endif
             break;
         }
         case IMAGE_BPP_RGB565: {

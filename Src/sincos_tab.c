@@ -1,3 +1,20 @@
+/**
+  ******************************************************************************
+  * @file    sincos_tab.c
+  * @author  MDG Application Team
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2024 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+
 const float sin_table[360] = {
      0.000000f,  0.017452f,  0.034899f,  0.052336f,  0.069756f,  0.087156f,  0.104528f,  0.121869f,
      0.139173f,  0.156434f,  0.173648f,  0.190809f,  0.207912f,  0.224951f,  0.241922f,  0.258819f,

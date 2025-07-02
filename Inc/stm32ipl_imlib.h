@@ -35,7 +35,7 @@
 #define IM_LOG2_8(x)    (((x) &               0xF0ULL) ? ( 4 +  IM_LOG2_4((x) >>  4)) :  IM_LOG2_4(x)) // NO ({ ... }) !
 #define IM_LOG2_16(x)   (((x) &             0xFF00ULL) ? ( 8 +  IM_LOG2_8((x) >>  8)) :  IM_LOG2_8(x)) // NO ({ ... }) !
 #define IM_LOG2_32(x)   (((x) &         0xFFFF0000ULL) ? (16 + IM_LOG2_16((x) >> 16)) : IM_LOG2_16(x)) // NO ({ ... }) !
-#define IM_LOG2(x)      (((x) & 0xFFFFFFFF00000000ULL) ? (32 + IM_LOG2_32((x) >> 32)) : IM_LOG2_32(x)) // NO ({ ... }) !
+#define IM_LOG2(x)      (((x) & 0xFFFFFFFF00000000ULL) ? (uint32_t)(32 + ((uint64_t)IM_LOG2_32((x)) >> 32)) : (uint32_t)IM_LOG2_32(x)) // NO ({ ... }) !
 
 #define INT8_T_BITS     (sizeof(int8_t) * 8)
 #define INT8_T_MASK     (INT8_T_BITS - 1)
@@ -69,6 +69,37 @@
 #define UINT64_T_MASK   (UINT64_T_BITS - 1)
 #define UINT64_T_SHIFT  IM_LOG2(UINT64_T_MASK)
 ///@endcond
+
+#ifdef IPL_DISABLE_MVE_ALL
+#define IPL_RESIZE_DISABLE_MVE
+#define IPL_BINARY_DISABLE_MVE
+#define IPL_MATOP_DISABLE_MVE
+#define IPL_FILTER_DISABLE_MVE
+#define IPL_DRAW_DISABLE_MVE
+#endif
+
+#ifdef ARM_MATH_MVE_FLOAT16
+	#ifndef IPL_RESIZE_DISABLE_MVE
+	#define IPL_RESIZE_HAS_MVE
+	#endif
+#endif /* ARM_MATH_MVE_FLOAT16 */
+
+#ifdef ARM_MATH_MVEI
+	#ifndef IPL_BINARY_DISABLE_MVE
+	#define IPL_BINARY_HAS_MVE
+	#define IPL_IMLIB_HAS_MVE
+	#endif
+	#ifndef IPL_MATOP_DISABLE_MVE
+	#define IPL_MATOP_HAS_MVE
+	#define IPL_IMLIB_HAS_MVE
+	#endif
+	#ifndef IPL_FILTER_DISABLE_MVE
+	#define IPL_FILTER_HAS_MVE
+	#endif
+	#ifndef IPL_DRAW_DISABLE_MVE
+	#define IPL_DRAW_HAS_MVE
+	#endif
+#endif /* ARM_MATH_MVEI */
 
 // STM32IPL
 /**
@@ -434,6 +465,11 @@ typedef struct image
 #define IMAGE_RGB888_LINE_LEN(image) ((image)->w)
 #define IMAGE_RGB888_LINE_LEN_BYTES(image) (IMAGE_RGB888_LINE_LEN(image) * sizeof(rgb888_t))
 
+#define IMAGE_GET_BINARY_PIXEL_ADDR(image, x, y) \
+({ \
+    (((uint32_t *)(image)->data) + ((((image)->w + (uint32_t)UINT32_T_MASK) >> (uint32_t)UINT32_T_SHIFT) * (y) + ((x) >> (uint32_t)UINT32_T_SHIFT))); \
+})
+
 #define IMAGE_GET_BINARY_PIXEL(image, x, y) \
 ({ \
     (((uint32_t *)(image)->data)[((((image)->w + UINT32_T_MASK) >> UINT32_T_SHIFT) * (y)) + ((x) >> UINT32_T_SHIFT)] >> ((x) & UINT32_T_MASK)) & 1; \
@@ -456,6 +492,11 @@ typedef struct image
     ((uint32_t *)(image)->data)[((((image)->w + UINT32_T_MASK) >> UINT32_T_SHIFT) * (y)) + ((x) >> UINT32_T_SHIFT)] |= 1 << ((x) & UINT32_T_MASK); \
 })
 
+#define IMAGE_GET_GRAYSCALE_PIXEL_ADDR(image, x, y) \
+({ \
+    (((uint8_t *)(image)->data) + ((image)->w * (y) + (x))); \
+})
+
 #define IMAGE_GET_GRAYSCALE_PIXEL(image, x, y) \
 ({ \
     ((uint8_t *)(image)->data)[((image)->w * (y)) + (x)]; \
@@ -464,6 +505,11 @@ typedef struct image
 #define IMAGE_PUT_GRAYSCALE_PIXEL(image, x, y, v) \
 ({ \
     ((uint8_t *)(image)->data)[((image)->w * (y)) + (x)] = (v); \
+})
+
+#define IMAGE_GET_RGB565_PIXEL_ADDR(image, x, y) \
+({ \
+    (((uint16_t *)(image)->data) + ((image)->w * (y) + (x))); \
 })
 
 #define IMAGE_GET_RGB565_PIXEL(image, x, y) \
@@ -483,6 +529,11 @@ typedef struct image
 })
 
 // STM32IPL
+#define IMAGE_GET_RGB888_PIXEL_ADDR(image, x, y) \
+({ \
+	(((rgb888_t *)(image)->data) + ((image)->w * (y) + (x))); \
+})
+
 #define IMAGE_GET_RGB888_PIXEL(image, x, y) \
 ({ \
 	((rgb888_t *)(image)->data)[((image)->w * (y)) + (x)]; \

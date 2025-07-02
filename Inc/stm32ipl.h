@@ -479,8 +479,13 @@ stm32ipl_err_t STM32Ipl_RectMerge(array_t **rects);
  *
  *  @{
  */
+typedef enum {
+	RESIZE_NEAREST = 0,
+	RESIZE_BILINEAR
+}resize_algo_t;
 stm32ipl_err_t STM32Ipl_Crop(const image_t *src, image_t *dst, uint32_t x, uint32_t y);
-stm32ipl_err_t STM32Ipl_Resize(const image_t *src, image_t *dst, const rectangle_t *roi);
+stm32ipl_err_t STM32Ipl_Resize(const image_t *src, image_t *dst, const resize_algo_t algo);
+stm32ipl_err_t STM32Ipl_Resize_Roi(const image_t *src, const rectangle_t *src_roi, image_t *dst, const rectangle_t *dst_roi, const resize_algo_t algo);
 stm32ipl_err_t STM32Ipl_Downscale(const image_t *src, image_t *dst, bool reversed);
 /** @} */
 

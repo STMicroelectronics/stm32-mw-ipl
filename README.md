@@ -2,7 +2,7 @@
 
 *Copyright &copy; 2021 STMicroelectronics*
 
-# STM32 Image Processing Library v1.0.0
+# STM32 Image Processing Library v1.1.0
 
 ## Introduction
 
@@ -127,6 +127,28 @@ The developer can configure *STM32IPL* by executing the following steps:
 -   `STM32IPL_ENABLE_FRONTAL_FACE_CASCADE`: when the symbol `STM32IPL_ENABLE_OBJECT_DETECTION` is defined, it controls the inclusion of the provided frontal face cascade used to allow the detection of frontal faces
     
 -   `STM32IPL_ENABLE_EYE_CASCADE`: when the symbol `STM32IPL_ENABLE_OBJECT_DETECTION` is defined, it controls the inclusion of the provided eye cascade used to allow the detection of eyes
+
+5. ARM MVE optimizations enable
+
+Specific MVE optimizations have been added to some functions for grayscale format
+
+These optimizations are only available on MCU that support MVE (ARM MCU with Helium instructions).
+
+These optimizations can be disabled:
+
+-   either globally defining `IPL_DISABLE_MVE_ALL` (-DIPL_DISABLE_MVE_ALL). This flag will define all the following ones.
+  
+-   or for each kind of function independently:
+  
+    -   resize functions: using define `IPL_RESIZE_DISABLE_MVE` (-DIPL_RESIZE_DISABLE_MVE)
+    
+    -   binary functions: using define `IPL_BINARY_DISABLE_MVE` (-DIPL_BINARY_DISABLE_MVE)
+    
+    -   difference functions: using define `IPL_MATOP_DISABLE_MVE` (-DIPL_MATOP_DISABLE_MVE)
+    
+    -   filter functions: using define `IPL_FILTER_DISABLE_MVE` (-DIPL_FILTER_DISABLE_MVE)
+    
+    -   draw line functions: using define `IPL_DRAW_DISABLE_MVE` (-DIPL_DRAW_DISABLE_MVE)
 
 ### Initialization of the library
 
@@ -262,7 +284,7 @@ void Resize(void)
 		if (stm32ipl_err_Ok == STM32Ipl_AllocData(&dstImg, dstWidth, dstHeight,
                                                   image_bpp_t)srcImg.bpp)) {
 			// Resize the source image and store the results into the destination image.
-			if (stm32ipl_err_Ok == STM32Ipl_Resize(&srcImg, &dstImg, NULL)) {
+			if (stm32ipl_err_Ok == STM32Ipl_Resize(&srcImg, &dstImg, RESIZE_NEAREST)) {
 				// Display the destination image on the screen (right side).
 				STM32Ipl_DrawScreen_DMA2D(&dstImg, 400, 0);
 			}

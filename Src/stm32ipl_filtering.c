@@ -18,6 +18,9 @@
 
 #include "stm32ipl.h"
 #include "stm32ipl_imlib_int.h"
+#ifdef IPL_FILTER_HAS_MVE
+#include "mve_filter.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -264,6 +267,53 @@ stm32ipl_err_t STM32Ipl_Morph(image_t *img, uint8_t kSize, const int32_t *krn, f
 	return stm32ipl_err_Ok;
 }
 
+#ifdef IPL_FILTER_HAS_MVE
+static stm32ipl_err_t ipl_gaussian_mve_u8(image_t *img, uint8_t kSize, int *pascal, bool threshold, bool unsharp, const image_t *mask)
+{
+	int m;
+	// MVE u8 imlib_morph version
+	stm32ipl_err_t ret = stm32ipl_err_Generic;
+	uint8_t n = kSize * 2 + 1 ;
+	uint8_t *krn_u8 = xalloc0(n * n * sizeof(uint8_t));
+	if (!krn_u8) {
+		xfree(pascal);
+		return stm32ipl_err_OutOfMemory;
+	}
+
+	m = 0;
+	int i;
+	ret = stm32ipl_err_Ok;
+	for (i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			int temp = pascal[i] * pascal[j];
+			if (temp > UCHAR_MAX) {
+				ret = stm32ipl_err_UnsupportedFormat;
+				break;
+			}
+			krn_u8[(i * n) + j] = (int8_t) temp;
+			m += temp;
+		}
+	}
+
+	if (unsharp) {
+		if ((krn_u8[((n / 2) * n) + (n / 2)] - m * 2) < 0)
+			ret = stm32ipl_err_UnsupportedFormat;
+		else {
+		krn_u8[((n / 2) * n) + (n / 2)] -= m * 2;
+		m = -m;
+		}
+	}
+	if (ret == stm32ipl_err_Ok) {
+		if (mve_imlib_morph_u8(img, kSize, krn_u8, 1.0f / m, 0, threshold, 0, false, (image_t*) mask) != 0) {
+			ret = stm32ipl_err_Generic;
+		}
+	}
+	xfree(krn_u8);
+	return ret;
+}
+#endif
+
+
 /**
  * @brief Convolves the image by a smoothing gaussian kernel.
  * The supported formats are Binary, Grayscale, RGB565, RGB888.
@@ -285,6 +335,7 @@ stm32ipl_err_t STM32Ipl_Gaussian(image_t *img, uint8_t kSize, bool threshold, bo
 	int *pascal;
 	int *krn;
 	int m;
+	stm32ipl_err_t ret = stm32ipl_err_UnsupportedMethod;
 
 	STM32IPL_CHECK_VALID_IMAGE(img)
 	STM32IPL_CHECK_FORMAT(img, STM32IPL_IF_ALL)
@@ -309,11 +360,22 @@ stm32ipl_err_t STM32Ipl_Gaussian(image_t *img, uint8_t kSize, bool threshold, bo
 		pascal[i + 1] = (pascal[i] * (k_2 - i)) / (i + 1);
 	}
 
+#ifdef IPL_FILTER_HAS_MVE
+	/* Try MVE u8 implementation */
+	ret = ipl_gaussian_mve_u8(img, kSize, pascal, threshold, unsharp, mask);
+	if (ret == stm32ipl_err_Ok) {
+		xfree(pascal);
+		return ret;
+	}
+#endif
+
 	krn = xalloc0(n * n * sizeof(int));
 	if (!krn) {
 		xfree(pascal);
 		return stm32ipl_err_OutOfMemory;
 	}
+
+	ret = stm32ipl_err_Ok;
 
 	m = 0;
 
@@ -336,7 +398,7 @@ stm32ipl_err_t STM32Ipl_Gaussian(image_t *img, uint8_t kSize, bool threshold, bo
 
 	xfree(krn);
 
-	return stm32ipl_err_Ok;
+	return ret;
 }
 
 /**

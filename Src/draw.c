@@ -13,6 +13,9 @@
 // STM32IPL	#include "unaligned_memcpy.h"
 // STM32IPL	#include "cmsis_gcc.h"
 #include "cmsis_compiler.h"  // STM32IPL
+#ifdef IPL_DRAW_HAS_MVE
+#include "mve_draw.h"
+#endif
 
 
 #ifdef IMLIB_ENABLE_DMA2D
@@ -79,9 +82,9 @@ void imlib_set_pixel(image_t *img, int x, int y, int p)
             }
             case IMAGE_BPP_RGB888: { // STM32IPL
                 rgb888_t rgb888;
-            	rgb888.r = (p >> 16) & 0xFF;
-            	rgb888.g = (p >> 8) & 0xFF;
-            	rgb888.b = p & 0xFF;
+                rgb888.r = (p >> 16) & 0xFF;
+                rgb888.g = (p >> 8) & 0xFF;
+                rgb888.b = p & 0xFF;
                 IMAGE_PUT_RGB888_PIXEL(img, x, y, rgb888);
                 break;
             }
@@ -108,15 +111,42 @@ static void point_fill(image_t *img, int cx, int cy, int r0, int r1, int c)
 // https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C
 void imlib_draw_line(image_t *img, int x0, int y0, int x1, int y1, int c, int thickness)
 {
-    if (thickness > 0) {
-        int thickness0 = (thickness - 0) / 2;
-        int thickness1 = (thickness - 1) / 2;
-        int dx = abs(x1 - x0), sx = (x0 < x1) ? 1 : -1;
-        int dy = abs(y1 - y0), sy = (y0 < y1) ? 1 : -1;
-        int err = ((dx > dy) ? dx : -dy) / 2;
+  if (thickness > 0) {
+    int thickness0 = (thickness - 0) / 2;
+    int thickness1 = (thickness - 1) / 2;
+    int dx = abs(x1 - x0), sx = (x0 < x1) ? 1 : -1;
+    int dy = abs(y1 - y0), sy = (y0 < y1) ? 1 : -1;
+    int err = ((dx > dy) ? dx : -dy) / 2;
 
-        for (;;) {
-            point_fill(img, x0, y0, -thickness0, thickness1, c);
+      for (;;) {
+#ifdef IPL_DRAW_HAS_MVE
+      if ( thickness < 23) {
+        switch(img->bpp) {
+          case IMAGE_BPP_BINARY: {
+            point_fill_mve_binary(img, x0, y0, -thickness0, thickness1, c);
+            break;
+          }
+          case IMAGE_BPP_GRAYSCALE: {
+            point_fill_mve_grayscale(img, x0, y0, -thickness0, thickness1, c);
+            break;
+          }
+          case IMAGE_BPP_RGB565: {
+            point_fill_mve_rgb565(img, x0, y0, -thickness0, thickness1, c);
+            break;
+          }
+          case IMAGE_BPP_RGB888: { // STM32IPL
+            point_fill_mve_rgb888(img, x0, y0, -thickness0, thickness1, c);
+            break;
+          }
+          default: {
+            break;
+          }
+        }
+      }
+      else
+#else
+#endif
+        point_fill(img, x0, y0, -thickness0, thickness1, c);
             if ((x0 == x1) && (y0 == y1)) break;
             int e2 = err;
             if (e2 > -dx) { err -= dy; x0 += sx; }
@@ -353,9 +383,9 @@ void imlib_draw_string(image_t *img, int x_off, int y_off, const char *str, int 
     const int anchor = x_off;
 
     //for(char ch, last = '\0'; (ch = *str); str++, last = ch) {
-		for(char ch, last = '\0'; str++, last = ch;) {	// STM32IPL: assignment in condition removed.
-				ch = *str;	// STM32IPL: added.
-			
+    for(char ch, last = '\0'; str++, last = ch;) { // STM32IPL: assignment in condition removed.
+        ch = *str; // STM32IPL: added.
+
         if ((last == '\r') && (ch == '\n')) { // handle "\r\n" strings
             continue;
         }
@@ -645,7 +675,7 @@ void imlib_draw_row_put_row_buffer(imlib_draw_row_data_t *data, void *row_buffer
 // src width must be equal to dst width.
 void imlib_draw_row(int x_start, int x_end, int y_row, imlib_draw_row_data_t *data)
 {
- #ifdef STM32IPL
+#ifdef STM32IPL
     #define BLEND_RGB566(src_pixel, dst_pixel, smuad_alpha) \
     ({ \
         int _src_pixel = (src_pixel); \
@@ -693,8 +723,8 @@ void imlib_draw_row(int x_start, int x_end, int y_row, imlib_draw_row_data_t *da
     })
 #endif // STM32IPL
 
-    #define COLOR_GRAYSCALE_BINARY_MIN_LSL16 (COLOR_GRAYSCALE_BINARY_MIN << 16)
-    #define COLOR_GRAYSCALE_BINARY_MAX_LSL16 (COLOR_GRAYSCALE_BINARY_MAX << 16)
+#define COLOR_GRAYSCALE_BINARY_MIN_LSL16 (COLOR_GRAYSCALE_BINARY_MIN << 16)
+#define COLOR_GRAYSCALE_BINARY_MAX_LSL16 (COLOR_GRAYSCALE_BINARY_MAX << 16)
 
     switch (data->dst_img->bpp) {
         case IMAGE_BPP_BINARY: {
@@ -4137,7 +4167,7 @@ void imlib_draw_image(image_t *dst_img, image_t *src_img, int dst_x_start, int d
                                 // STM32IPL It seems __USAT_ASR is no more available in latest releases of cmsis_gcc.h.
                                 //r_pixel = __USAT_ASR(r_pixel, 5, 16);
                                 uint32_t sat; // STM32IPL
-								sat = __USAT(r_pixel, 5); // STM32IPL
+                                sat = __USAT(r_pixel, 5); // STM32IPL
                                 r_pixel = sat >> 16; // STM32IPL
 
                                 long g_pixel = __SMLAD(smuad_dx_dx2, smuad_g_a0_g_a1, (dx3 * g_a2) + g_d1_avg);

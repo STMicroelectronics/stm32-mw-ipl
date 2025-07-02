@@ -149,4 +149,10 @@
 // Enable STM32 DMA2D
 //#define IMLIB_ENABLE_DMA2D
 
+#ifdef IPL_RESIZE_ROUNDING
+#define IPL_RESIZE_PEL_IDX_ROUNDING (1 << 15)
+#else
+#define IPL_RESIZE_PEL_IDX_ROUNDING (0)
+#endif
+
 #endif //__IMLIB_CONFIG_H__
