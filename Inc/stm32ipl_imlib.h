@@ -904,6 +904,42 @@ typedef struct find_circles_list_lnk_data
 	uint16_t magnitude;	/**< Sum of all Sobel filter magnitudes of pixels that make up that circle. */
 } find_circles_list_lnk_data_t;
 
+/**
+ * @brief Dewarping interpolation algorithm
+ */
+typedef enum
+{
+	DEWARP_NEAREST = 0,	/**< Use nearest neighbor. */
+	DEWARP_BILINEAR		/**< Use bilinear interpolation. */
+} dewarping_algo_t;
+
+/**
+ * @brief Dewarping mapxy format
+ */
+typedef enum
+{
+	MAPXY_DENSE_FLOAT,				/**< mapxy dense float array. */
+	MAPXY_DENSE_FIXED_POINT_12_4,	/**< mapxy dense 12.4 fixed point array. */
+	MAPXY_SPARSE_FLOAT,				/**< mapxy sparse format. */
+} mapxy_type_t;
+
+/**
+ * @brief Dewarping mapxy information
+ */
+typedef struct
+{
+	mapxy_type_t type;				/**< mapxy format type. */
+	union {
+		const float *dense_float;	/**< An array of src->h * src->w * 2 float values. Used when type has value MAPXY_DENSE_FLOAT. */
+		const uint16_t *dense_fp;	/**< An array of src->h * src->w * 2 uint16_t values. Each value is 12.4 fixed point value. Used when type has value MAPXY_DENSE_FIXED_POINT_12_4. */
+		struct {
+			const int *vertices;	/**<  An array of vertices (x, y coordinate) integer values */
+			const float *uv;		/**<  An array of vertices (u, v values) float values */
+			const int *tri_idx;		/**<  An array of triangle vertice index (a, b,c corner index amoung vertices). Use sentinel value (-1, -1, -1) as end of array */
+		} sparse_float;				/**< Used when type has value MAPXY_SPARSE_FLOAT. */
+	};
+} mapxy_t;
+
 ///@cond
 /* Color space functions. */
 int8_t imlib_rgb565_to_l(uint16_t pixel);

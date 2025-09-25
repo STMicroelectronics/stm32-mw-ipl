@@ -15,21 +15,31 @@
 #ifdef IMLIB_ENABLE_BINARY_OPS
 void imlib_binary(image_t *out, image_t *img, list_t *thresholds, bool invert, bool zero, image_t *mask)
 {
+    list_lnk_t *it = iterator_start_from_head(thresholds);
+#ifdef IPL_BINARY_HAS_MVE
+    if (NULL == iterator_next(it)) {
+        color_thresholds_list_lnk_data_t lnk_data;
+        iterator_get(thresholds, it, &lnk_data);
+        switch(img->bpp) {
+            case IMAGE_BPP_GRAYSCALE:
+                mve_imlib_binary_grayscale(out, img, &lnk_data, invert, zero, mask);
+                return;
+            case IMAGE_BPP_RGB888:
+                mve_imlib_binary_rgb888(out, img, &lnk_data, invert, zero, mask);
+                return;
+            case IMAGE_BPP_RGB565:
+                mve_imlib_binary_rgb565(out, img, &lnk_data, invert, zero, mask);
+                return;
+            default:
+                break;
+        }
+    }
+#endif
     image_t bmp;
     bmp.w = img->w;
     bmp.h = img->h;
     bmp.bpp = IMAGE_BPP_BINARY;
     bmp.data = fb_alloc0(image_size(&bmp), FB_ALLOC_NO_HINT);
-    list_lnk_t *it = iterator_start_from_head(thresholds);
-#ifdef IPL_BINARY_HAS_MVE
-    if (NULL == iterator_next(it) && (IMAGE_BPP_GRAYSCALE == img->bpp)) {
-        color_thresholds_list_lnk_data_t lnk_data;
-        iterator_get(thresholds, it, &lnk_data);
-        mve_imlib_binary_grayscale(out, img, &lnk_data, invert, zero, mask);
-        fb_free(); /* bmp.data */
-        return;
-    }
-#endif
     for (; it; it = iterator_next(it)) {
         color_thresholds_list_lnk_data_t lnk_data;
         iterator_get(thresholds, it, &lnk_data);
@@ -72,11 +82,16 @@ void imlib_binary(image_t *out, image_t *img, list_t *thresholds, bool invert, b
             }
             case IMAGE_BPP_RGB888: { // STM32IPL
                 for (int y = 0, yy = img->h; y < yy; y++) {
-                	rgb888_t *old_row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(img, y);
+                    rgb888_t *old_row_ptr = IMAGE_COMPUTE_RGB888_PIXEL_ROW_PTR(img, y);
                     uint32_t *bmp_row_ptr = IMAGE_COMPUTE_BINARY_PIXEL_ROW_PTR(&bmp, y);
                     for (int x = 0, xx = img->w; x < xx; x++) {
-                    	rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(old_row_ptr, x);
+                        rgb888_t pixel = IMAGE_GET_RGB888_PIXEL_FAST(old_row_ptr, x);
+#ifndef BINARY_RGB888_LEGACY
+                        uint16_t pixel_rgb565 = COLOR_R8_G8_B8_TO_RGB565(pixel.r,pixel.g,pixel.b);
+                        if (COLOR_THRESHOLD_RGB565(pixel_rgb565, &lnk_data, invert)) {
+#else
                         if (COLOR_THRESHOLD_RGB888(pixel, &lnk_data, invert)) {
+#endif
                             IMAGE_SET_BINARY_PIXEL_FAST(bmp_row_ptr, x);
                         }
                     }

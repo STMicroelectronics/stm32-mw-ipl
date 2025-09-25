@@ -421,6 +421,14 @@ stm32ipl_err_t STM32Ipl_BlackHat(image_t *img, uint8_t kSize, uint8_t threshold,
 /** @} */
 
 /**
+ * @defgroup dewarping Dewarping
+ *
+ *  @{
+ */
+stm32ipl_err_t STM32Ipl_Dewarp(const image_t *src, image_t *dst, const mapxy_t *mapxy, dewarping_algo_t algo);
+/** @} */
+
+/**
  * @defgroup objDet Object detection
  *
  *  @{

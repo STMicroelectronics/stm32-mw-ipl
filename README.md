@@ -2,7 +2,7 @@
 
 *Copyright &copy; 2021 STMicroelectronics*
 
-# STM32 Image Processing Library v1.1.0
+# STM32 Image Processing Library v1.2.0
 
 ## Introduction
 
